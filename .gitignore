@@ -1,0 +1,35 @@
+# Arquivos de ambiente (IMPORTANTE: nunca commitar!)
+.env
+.env.local
+.env.production
+
+# Dados dos volumes Docker
+postgres_data/
+redis_data/
+evolution_instances/
+evolution_store/
+n8n_data/
+
+# Logs
+*.log
+logs/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules (se usar)
+node_modules/
+
+# Temporários
+tmp/
+temp/
+*.tmp
