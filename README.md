@@ -4,7 +4,7 @@ Sistema completo de automação para WhatsApp usando Evolution API, N8N e Postgr
 
 ## 🚀 Funcionalidades
 
-- **Evolution API**: Conexão com WhatsApp via QR Code
+- **Evolution API**: Conexão com WhatsApp via QR Code (com interface de gerenciamento embutida)
 - **N8N**: Automação de workflows e respostas
 - **PostgreSQL**: Banco de dados para armazenamento
 - **Redis**: Cache para melhor performance (opcional)
@@ -49,12 +49,42 @@ docker-compose up -d
 
 ### 4. Acesse os serviços
 
+- **Evolution API**: http://localhost:8080
+  - **Manager (Interface de Gerenciamento)**: http://localhost:8080/manager
+  - API Key: definida em `EVOLUTION_API_KEY` (.env)
+  - Use o Manager para: criar instâncias, escanear QR Code, ver logs
+
 - **N8N**: http://localhost:5678
   - Usuário: definido em `N8N_BASIC_AUTH_USER` (.env)
   - Senha: definida em `N8N_BASIC_AUTH_PASSWORD` (.env)
 
-- **Evolution API**: http://localhost:8080
-  - API Key: definida em `EVOLUTION_API_KEY` (.env)
+## 🎛️ Gerenciamento de Containers
+
+### Interface Nativa do Evolution (Recomendado)
+
+Acesse http://localhost:8080/manager para gerenciar o Evolution API:
+- Criar e gerenciar instâncias do WhatsApp
+- Escanear QR Code
+- Ver status de conexões
+- Configurar webhooks
+- Enviar mensagens de teste
+
+### Alternativas para Gerenciar Containers Docker
+
+O **EasyPanel não funciona no Windows** (Docker Desktop). Alternativas:
+
+1. **Docker Desktop GUI** (já instalado)
+   - Abra o Docker Desktop
+   - Vá em "Containers"
+   - Gerencie visualmente todos os containers
+
+2. **Portainer** (interface web completa)
+   - Descomente a seção `portainer` no `docker-compose.yml`
+   - Execute: `docker-compose up -d portainer`
+   - Acesse: https://localhost:9443
+
+3. **Outros** (Yacht, Dozzle, etc.)
+   - Veja o arquivo [ALTERNATIVAS_EASYPANEL.md](ALTERNATIVAS_EASYPANEL.md)
 
 ## 🔐 Segurança
 
