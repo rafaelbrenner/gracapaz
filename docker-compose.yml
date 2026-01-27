@@ -107,6 +107,19 @@ services:
   #     - evolution-api
   #     - n8n
 
+  # Portainer (gerenciamento de containers)
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - whatsapp-network
+    restart: unless-stopped
+
 networks:
   whatsapp-network:
     driver: bridge
@@ -117,5 +130,6 @@ volumes:
   evolution_instances:
   evolution_store:
   n8n_data:
+  portainer_data:
 
     

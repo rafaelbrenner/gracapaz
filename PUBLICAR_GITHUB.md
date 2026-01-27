@@ -65,7 +65,7 @@ Devem aparecer apenas:
 4. **No seu terminal**:
 
 ```bash
-cd "c:\Users\rafae\OneDrive\Documentos\graca_paz"
+cd /caminho/para/seu/projeto/graca_paz
 
 # Configure o Git (se ainda não fez)
 git config --global user.name "Seu Nome"

@@ -74,7 +74,7 @@
 Se você descobrir uma vulnerabilidade de segurança, por favor:
 
 1. **NÃO** abra uma issue pública
-2. Envie um email para: [seu-email@dominio.com]
+2. Envie um email para: security@gracapaz.com.br
 3. Inclua:
    - Descrição detalhada da vulnerabilidade
    - Passos para reproduzir
@@ -160,7 +160,7 @@ evolution-api:
 
 ## 📞 Contato
 
-Para questões de segurança: [seu-email@dominio.com]
+Para questões de segurança: security@gracapaz.com.br
 
 ---
 
