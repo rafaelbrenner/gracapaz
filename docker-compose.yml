@@ -118,10 +118,6 @@ volumes:
   evolution_instances:
   evolution_store:
   n8n_data:
-<<<<<<< HEAD
   portainer_data:
-=======
-  easypanel_data:
->>>>>>> 10eb0c9db24bac2e26aee91bb9dd719cdf72449a
 
     
