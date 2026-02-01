@@ -95,55 +95,6 @@ services:
       - whatsapp-network
     restart: unless-stopped
 
-  # ⚠️ EasyPanel NÃO funciona no Windows (Docker Desktop)
-  # Problema conhecido: "Invalid version. Must be a string. Got type object"
-  #
-  # ✅ ALTERNATIVAS RECOMENDADAS:
-  # 1. Use a interface nativa do Evolution: http://localhost:8080/manager
-  # 2. Use Portainer para gerenciar containers: descomentar seção abaixo
-  # 3. Veja o arquivo ALTERNATIVAS_EASYPANEL.md para mais opções
-  #
-  # easypanel:
-  #   image: easypanel/easypanel:latest
-  #   container_name: easypanel
-  #   ports:
-  #     - "3000:3000"
-  #     - "3001:3001"
-  #   volumes:
-  #     - //var/run/docker.sock:/var/run/docker.sock
-  #     - easypanel_data:/etc/easypanel
-  #   networks:
-  #     - whatsapp-network
-  #   restart: unless-stopped
-  #   privileged: true
-
-  # Portainer (alternativa ao EasyPanel - RECOMENDADO para Windows)
-  # Descomente as linhas abaixo para usar
-  # portainer:
-  #   image: portainer/portainer-ce:latest
-  #   container_name: portainer
-  #   ports:
-  #     - "9000:9000"
-  #     - "9443:9443"
-  #   volumes:
-  #     - //var/run/docker.sock:/var/run/docker.sock
-  #     - portainer_data:/data
-  #   networks:
-  #     - whatsapp-network
-  #   restart: unless-stopped
-
-  # Cloudflare Tunnel (opcional - descomente se for usar)
-  # cloudflared:
-  #   image: cloudflare/cloudflared:latest
-  #   container_name: cloudflared
-  #   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-  #   networks:
-  #     - whatsapp-network
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - evolution-api
-  #     - n8n
-
   # Portainer (gerenciamento de containers)
   portainer:
     image: portainer/portainer-ce:latest
