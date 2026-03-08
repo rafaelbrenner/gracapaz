@@ -1,0 +1,996 @@
+{
+  "id": "o6yPgQ34jJPDnduM",
+  "name": "Bot Igreja - Menu Principal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gracapaz",
+        "options": {}
+      },
+      "id": "9beeddcc-17e2-415f-a491-694781cc3b05",
+      "name": "Webhook Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        6624,
+        3600
+      ],
+      "webhookId": "75b51a91-68a1-46ca-8a83-942e12f57915",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": false
+            },
+            {
+              "id": "c2",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "messages.upsert"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f777507e-f276-4e89-b683-21c7284d5127",
+      "name": "Somente Mensagens Recebidas",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        6912,
+        3600
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "telefone",
+              "type": "string",
+              "value": "={{ $json.body.data.key.remoteJid }}"
+            },
+            {
+              "id": "a2",
+              "name": "nome",
+              "type": "string",
+              "value": "={{ $json.body.data.pushName || 'Visitante' }}"
+            },
+            {
+              "id": "a3",
+              "name": "mensagem",
+              "type": "string",
+              "value": "={{ ($json.body.data.message.conversation ?? $json.body.data.message.extendedTextMessage?.text ?? '').trim().toLowerCase() }}"
+            },
+            {
+              "id": "a4",
+              "name": "instancia",
+              "type": "string",
+              "value": "={{ $json.body.instance }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c26d018e-80b1-4642-b740-4fe68d2c9725",
+      "name": "Extrair Dados da Mensagem",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        7216,
+        3584
+      ],
+      "typeVersion": 3.3
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "1f2fb19c-1cb8-4814-8d1c-ffca78aff9e9",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "1"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "horarios"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "15ae5da6-fe9a-4f95-b018-54d0c3426b68",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "2"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "oracao"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "2fd15882-e3af-4041-82a8-04b133c45a54",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "3"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "celulas"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "7d9ae5a5-21fa-4e2b-82c5-5ee036820a09",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "4"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "dizimo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "0858482d-7777-48b4-b843-cf3aeb727573",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "5"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "dizimos"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "139f8b60-8e4e-4a48-842c-8c3234224bc4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "6"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "pastoral"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "f68446a0-c37a-40d7-a80d-e2a207afac36",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "7"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "versiculo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "5d7f1797-ac76-48d1-97c9-1ae6a51fbf86",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "31"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "pascoa"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "6ce0e513-873a-49b1-b0cb-c856f3bebb78",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "32"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "familia"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "4507a7d3-f409-44c9-a913-10b112ba1c86",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "33"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "deeplife"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "5cad046d-5a6c-465f-a224-53a9acdbf777",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": "34"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "milho"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 1,
+                  "leftValue": "",
+                  "caseSensitive": false,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "1db129c9-74cd-4d3f-82c0-4345d825b5ce",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.mensagem }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "menu"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c72b66be-47ca-42d7-b93b-f7bc342e2127",
+      "name": "Roteador de Opcoes",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        7440,
+        3584
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "=Olá! Seja bem-vindo à Igreja Batista Graça e Paz 🙌\n\nComo podemos te ajudar hoje?\nDigite o número da opção desejada:\n\n1️⃣ Dias e horários dos cultos\n2️⃣ Cursos, seminários e células\n3️⃣ Eventos 2026\n4️⃣ Informações sobre inscrições\n5️⃣ Dízimos e Ofertas\n6️⃣ Gabinete Pastoral\n7️⃣ Falar com nossa equipe"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2ac56ed9-d1da-4913-a157-b715eceaee95",
+      "name": "Enviar Menu de Boas-vindas",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7872,
+        4240
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "1️⃣ Dias e horários dos cultos\n\n📍 *Culto de Celebração*\nDomingo | 19h\n\n🔥 *Culto da Juventude – Deep Life*\nSábado | 19h\n\n📖 *Célula de Jovens*\nQuinta-feira | 20h\n\n🌸 *Culto das Mulheres*\nPrimeira segunda-feira do mês | 20h\n\n🛡 *Culto dos Homens*\nÚltima sexta-feira do mês | 20h\n\n🙏 *Dia com Deus*\nPrimeiro sábado do mês | 8h às 18h\n\nDigite 0 para voltar ao menu."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e2a67c91-798b-4008-828a-4eedd40383e0",
+      "name": "Enviar Horarios",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7872,
+        3328
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "2️⃣ Cursos, Seminários e Células\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nPara saber datas e inscrições, digite 4️⃣.\n\nDigite 0 para voltar ao menu."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "25d407f5-9277-4d01-ae3c-726056ce4a59",
+      "name": "Enviar Pedido de Oracao",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7888,
+        3520
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "3️⃣ Eventos 2026\n\nDigite o código do evento para saber mais:\n\n⌨️ *31* — Auto de Páscoa\n⌨️ *32* — Dia da Família\n⌨️ *33* — Imersão Deep Life\n⌨️ *34* — Festa do Milho\n\n⬅️ *0* — Voltar ao menu principal"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "282b4fdc-bfcd-406b-ba4e-78138021e3b9",
+      "name": "Enviar Info Celulas",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7872,
+        3712
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "4️⃣ Inscrições\n\nPara se inscrever em eventos ou cursos:\n\n🔗 Acesse o link enviado pela igreja\n💳 Pagamento via Pix\n🏛 Ou presencialmente na igreja\n\n💬 Se precisar de ajuda, digite 5️⃣ para falar com nossa equipe.\n\nDigite 0 para voltar ao menu."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "afe9a190-0373-444e-829e-dc0cf2edc6d9",
+      "name": "Enviar Info Dizimo",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7888,
+        3888
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "7️⃣ Falar com nossa equipe\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cc739299-d490-446e-9958-f0bbdc184727",
+      "name": "Enviar Gabinete Pastoral",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7872,
+        4032
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\" }",
+        "options": {}
+      },
+      "id": "dd50befb-3809-4056-9f57-48211bb56cfe",
+      "name": "Responder 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        6944,
+        4016
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "5️⃣ Dízimos e Ofertas\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "81741910-af25-4c3b-8f2a-8f9117397d50",
+      "name": "Enviar Dizimos e Ofertas",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        6384,
+        3328
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "6️⃣ Gabinete Pastoral 📅\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6dfbe46f-1dff-4732-b7e0-dfde3ce81ef7",
+      "name": "Enviar Gabinete Pastoral Novo",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        6384,
+        3456
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "🎭 *Auto de Páscoa*\n\n📅 Apresentações:\n11 de abril | 20h\n12 de abril | 19h\n\n🎟 Ingressos GRATUITOS\nDisponíveis no Sympla: https://www.sympla.com.br/evento/auto-de-pascoa-yeshua-sabado/3318612\n\n⚠ Trazer 1kg de alimento não perecível.\nOs alimentos serão destinados às famílias assistidas do Sol Nascente ❤️\n\nDigite 3 para voltar aos eventos."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-pascoa",
+      "name": "Enviar Auto de Pascoa",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        6112,
+        3312
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "👨‍👩‍👧 *Dia da Família*\n\n📅 1º de maio | A partir das 8h\n\n💰 Valores:\nAdulto: R$100\nCrianças até 10 anos: R$50\n\nUm dia especial para você e sua família descansarem:\n🎁 Sorteio de brindes\n🎉 Momentos de diversão\n🍽 Confraternização\n\nDigite 3 para voltar aos eventos."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-familia",
+      "name": "Enviar Dia da Familia",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        6112,
+        3456
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "🔥 *Imersão Deep Life*\n\nEvento especial para jovens.\n\n📌 Inscrições:\nhttps://bit.ly/4swdjc7\n\nDigite 3 para voltar aos eventos."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-deeplife",
+      "name": "Enviar Imersao Deep Life",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        6112,
+        3616
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "🌽 *Festa do Milho*\n\nMais informações em breve.\n\nDigite 3 para voltar aos eventos."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-milho",
+      "name": "Enviar Festa do Milho",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        6112,
+        3776
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aRJaxggThNO5cGIS",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Roteador de Opcoes": {
+      "main": [
+        [
+          {
+            "node": "Enviar Horarios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Pedido de Oracao",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Info Celulas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Info Dizimo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Dizimos e Ofertas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Gabinete Pastoral Novo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Gabinete Pastoral",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Auto de Pascoa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Dia da Familia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Imersao Deep Life",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Festa do Milho",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Menu de Boas-vindas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Evolution API": {
+      "main": [
+        [
+          {
+            "node": "Somente Mensagens Recebidas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados da Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Roteador de Opcoes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Somente Mensagens Recebidas": {
+      "main": [
+        [
+          {
+            "node": "Extrair Dados da Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "updatedAt": "2026-03-08T20:54:27.536+00:00",
+  "createdAt": "2026-03-08T00:31:46.108+00:00"
+}

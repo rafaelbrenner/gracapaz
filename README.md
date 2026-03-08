@@ -1,190 +1,337 @@
-# Bot WhatsApp para Igreja - Sistema de Automação
+# Bot WhatsApp — Igreja Batista Graça e Paz
 
-Sistema completo de automação para WhatsApp usando Evolution API, N8N e PostgreSQL.
+Sistema de automação para WhatsApp usando Evolution API v2.2.3, N8N e PostgreSQL.
 
-## 🚀 Funcionalidades
+---
 
-- **Evolution API**: Conexão com WhatsApp via QR Code (com interface de gerenciamento embutida)
-- **N8N**: Automação de workflows e respostas
-- **PostgreSQL**: Banco de dados para armazenamento
-- **Redis**: Cache para melhor performance (opcional)
-- **Cloudflare Tunnel**: Acesso remoto seguro (opcional)
+## Arquitetura
 
-## 📋 Pré-requisitos
+```
+WhatsApp ──► Evolution API ──► N8N Webhook ──► Workflow ──► Evolution API ──► WhatsApp
+                (porta 8080)     (porta 5678)
+```
+
+**Containers:**
+| Serviço        | Porta  | URL                        |
+|----------------|--------|----------------------------|
+| Evolution API  | 8080   | http://localhost:8080      |
+| N8N            | 5678   | http://localhost:5678      |
+| PostgreSQL     | 5432   | interno                    |
+| Portainer      | 9000   | http://localhost:9000      |
+
+---
+
+## Pré-requisitos
 
 - Docker e Docker Compose instalados
-- Conta Cloudflare (opcional, para acesso remoto)
+- Linux (testado no Ubuntu 22.04+)
 
-## ⚙️ Configuração
+---
+
+## Instalação do Zero
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/graca_paz.git
-cd graca_paz
+git clone <url-do-repositorio> gracapaz
+cd gracapaz
 ```
 
-### 2. Configure as variáveis de ambiente
+### 2. Configure o arquivo .env
 
 ```bash
-# Copie o arquivo de exemplo
 cp .env.example .env
-
-# Edite o arquivo .env com suas credenciais
-nano .env  # ou use seu editor preferido
+nano .env
 ```
 
-**Importante**: Altere TODAS as senhas e tokens no arquivo `.env`:
+Preencha todas as variáveis. As críticas são:
 
-- `POSTGRES_PASSWORD`: Senha do PostgreSQL
-- `EVOLUTION_API_KEY`: Chave de API para Evolution
-- `N8N_BASIC_AUTH_PASSWORD`: Senha do N8N
-- `CLOUDFLARE_TUNNEL_TOKEN`: Token do Cloudflare (se usar)
+```env
+POSTGRES_PASSWORD=sua_senha_forte
+EVOLUTION_API_KEY=sua_global_api_key
+N8N_BASIC_AUTH_USER=admin
+N8N_BASIC_AUTH_PASSWORD=sua_senha_n8n
 
-### 3. Inicie os containers
+# CRÍTICO: sem esta variável o Baileys não gera QR Code (fica em loop)
+CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690
+```
+
+### 3. Suba os containers
 
 ```bash
 docker-compose up -d
 ```
 
-### 4. Acesse os serviços
+Aguarde ~30 segundos para todos iniciarem.
 
-- **Evolution API**: http://localhost:8080
-  - **Manager (Interface de Gerenciamento)**: http://localhost:8080/manager
-  - API Key: definida em `EVOLUTION_API_KEY` (.env)
-  - Use o Manager para: criar instâncias, escanear QR Code, ver logs
+---
 
-- **N8N**: http://localhost:5678
-  - Usuário: definido em `N8N_BASIC_AUTH_USER` (.env)
-  - Senha: definida em `N8N_BASIC_AUTH_PASSWORD` (.env)
+## Configuração da Evolution API
 
-## 🎛️ Gerenciamento de Containers
-
-### Interface Nativa do Evolution (Recomendado)
-
-Acesse http://localhost:8080/manager para gerenciar o Evolution API:
-- Criar e gerenciar instâncias do WhatsApp
-- Escanear QR Code
-- Ver status de conexões
-- Configurar webhooks
-- Enviar mensagens de teste
-
-### Alternativas para Gerenciar Containers Docker
-
-O **EasyPanel não funciona no Windows** (Docker Desktop). Alternativas:
-
-1. **Docker Desktop GUI** (já instalado)
-   - Abra o Docker Desktop
-   - Vá em "Containers"
-   - Gerencie visualmente todos os containers
-
-2. **Portainer** (interface web completa)
-   - Descomente a seção `portainer` no `docker-compose.yml`
-   - Execute: `docker-compose up -d portainer`
-   - Acesse: https://localhost:9443
-
-3. **Outros** (Yacht, Dozzle, etc.)
-   - Veja o arquivo [ALTERNATIVAS_EASYPANEL.md](ALTERNATIVAS_EASYPANEL.md)
-
-## 🔐 Segurança
-
-### ⚠️ IMPORTANTE - Antes de publicar no GitHub:
-
-1. **NUNCA** commite o arquivo `.env`
-2. O `.gitignore` já está configurado para proteger seus dados
-3. Troque TODAS as senhas padrão em produção
-4. Use senhas fortes e únicas
-5. Mantenha o token do Cloudflare em segredo
-
-### Verificando segurança antes do commit:
+### Criar instância WhatsApp
 
 ```bash
-# Verifique se o .env não será commitado
-git status
-
-# O arquivo .env NÃO deve aparecer na lista
-# Se aparecer, verifique seu .gitignore
+curl -X POST http://localhost:8080/instance/create \
+  -H "Content-Type: application/json" \
+  -H "apikey: SUA_GLOBAL_API_KEY" \
+  -d '{
+    "instanceName": "gracapaz",
+    "token": "SEU_TOKEN_DA_INSTANCIA",
+    "qrcode": true
+  }'
 ```
 
-## 📦 Estrutura do Projeto
+### Conectar WhatsApp via QR Code
 
-```
-graca_paz/
-├── docker-compose.yml    # Configuração dos containers
-├── .env                  # Credenciais (NÃO commitar!)
-├── .env.example          # Exemplo de configuração
-├── .gitignore           # Arquivos a ignorar no Git
-└── README.md            # Este arquivo
-```
+Acesse http://localhost:8080/manager, selecione a instância `gracapaz` e escaneie o QR Code.
 
-## 🔧 Comandos Úteis
+### Configurar Webhook para o N8N
 
 ```bash
-# Ver logs dos containers
-docker-compose logs -f
+curl -X POST http://localhost:8080/webhook/set/gracapaz \
+  -H "Content-Type: application/json" \
+  -H "apikey: SEU_TOKEN_DA_INSTANCIA" \
+  -d '{
+    "url": "http://n8n:5678/webhook/gracapaz",
+    "webhook_by_events": false,
+    "webhook_base64": false,
+    "events": ["MESSAGES_UPSERT"]
+  }'
+```
 
-# Ver logs de um serviço específico
+> ⚠️ Use `http://n8n:5678` (nome do container), não `localhost`.
+
+---
+
+## Patch LID — OBRIGATÓRIO
+
+O WhatsApp usa JIDs no formato `@lid` para contatos com privacidade ativada.
+A Evolution API v2.2.3 rejeita esses JIDs por padrão. O patch corrige isso.
+
+O arquivo `patches/main.js` já está no repositório com o patch aplicado.
+O `docker-compose.yml` monta esse arquivo automaticamente:
+
+```yaml
+volumes:
+  - ./patches/main.js:/evolution/dist/main.js:ro
+```
+
+**O que o patch faz:** adiciona um bypass na função `whatsappNumber()` — se o JID contém `@lid`, retorna `exists: true` sem chamar `onWhatsApp()`. O Baileys suporta envio nativo para `@lid`.
+
+Após qualquer atualização da imagem Docker, o patch continua ativo pois é montado via volume.
+
+---
+
+## Configuração do N8N
+
+### 1. Criar credencial de autenticação
+
+Acesse http://localhost:5678 → **Credentials** → **New** → **Header Auth**
+
+- **Name:** `Header Auth account`
+- **Name (header):** `apikey`
+- **Value:** `SEU_TOKEN_DA_INSTANCIA`
+
+> O ID da credencial gerado pelo N8N precisa ser atualizado no workflow (veja abaixo).
+
+### 2. Importar o workflow
+
+⚠️ **O comando `n8n import:workflow` não funciona** nesta versão por um bug com `workflow_publish_history`. Use SQL direto:
+
+```bash
+# Copiar arquivo para o container postgres
+docker cp workflows/bot-menu-principal.json postgres:/tmp/bot-menu-principal.json
+
+# Verificar se já existe um workflow
+docker exec postgres psql -U root -d n8n \
+  -c "SELECT id, name FROM workflow_entity;"
+
+# Se não existir, inserir:
+docker exec postgres psql -U root -d n8n -c "
+INSERT INTO workflow_entity (id, name, nodes, connections, active, settings, \"staticData\", tags, \"updatedAt\", \"createdAt\")
+SELECT
+  'o6yPgQ34jJPDnduM',
+  'Bot Igreja - Menu Principal',
+  (SELECT nodes FROM json_populate_record(null::workflow_entity, pg_read_file('/tmp/bot-menu-principal.json')::json)),
+  ...
+"
+
+# Se já existir, atualizar:
+docker exec postgres bash -c "
+psql -U root -d n8n << 'EOF'
+UPDATE workflow_entity
+SET nodes = (SELECT (content::json->>'nodes')::jsonb FROM (SELECT pg_read_file('/tmp/bot-menu-principal.json') AS content) t),
+    connections = (SELECT (content::json->>'connections')::jsonb FROM (SELECT pg_read_file('/tmp/bot-menu-principal.json') AS content) t),
+    \"updatedAt\" = NOW()
+WHERE name = 'Bot Igreja - Menu Principal';
+EOF
+"
+```
+
+> Na prática, o mais fácil é criar o workflow manualmente na UI do N8N seguindo a estrutura do arquivo `workflows/bot-menu-principal.json`.
+
+### 3. Atualizar ID da credencial no workflow
+
+Depois de criar a credencial no N8N, pegue o ID gerado:
+
+```bash
+docker exec postgres psql -U root -d n8n \
+  -c "SELECT id, name FROM credentials_entity;"
+```
+
+Substitua o ID em todos os nós HTTP do workflow:
+```json
+"credentials": {
+  "httpHeaderAuth": {
+    "id": "ID_DA_SUA_CREDENCIAL",
+    "name": "Header Auth account"
+  }
+}
+```
+
+### 4. Ativar o workflow
+
+No N8N, abra o workflow e clique em **Active** (toggle no canto superior direito).
+
+---
+
+## Estrutura do Workflow
+
+```
+Webhook (POST /gracapaz)
+  └─► Somente Mensagens Recebidas (IF)
+        ├─► [true]  Extrair Dados da Mensagem (SET)
+        │     └─► Roteador de Opcoes (SWITCH)
+        │           ├─► 1 → Enviar Horarios
+        │           ├─► 2 → Enviar Cursos e Celulas
+        │           ├─► 3 → Enviar Eventos
+        │           ├─► 4 → Enviar Inscricoes
+        │           ├─► 5 → Enviar Dizimos e Ofertas
+        │           ├─► 6 → Enviar Gabinete Pastoral
+        │           ├─► 7 → Enviar Falar com Equipe
+        │           └─► (qualquer outro) → Enviar Menu de Boas-vindas
+        └─► [false] Responder 200 OK
+```
+
+**⚠️ Atenção Switch Node:** `fallbackOutput: "extra"` **não funciona** no N8N v1.123.4.
+Use uma regra catch-all com `operation: "exists"` como última regra antes do menu.
+
+---
+
+## Menu do Bot
+
+```
+Olá! Seja bem-vindo à Igreja Batista Graça e Paz 🙌
+
+1️⃣ Dias e horários dos cultos
+2️⃣ Cursos, seminários e células
+3️⃣ Eventos 2026
+4️⃣ Informações sobre inscrições
+5️⃣ Dízimos e Ofertas
+6️⃣ Gabinete Pastoral
+7️⃣ Falar com nossa equipe
+```
+
+---
+
+## Informações da Igreja
+
+| Campo        | Valor                         |
+|--------------|-------------------------------|
+| PIX (CNPJ)   | 14.853.562/0001-92            |
+| Nome PIX     | Igreja Batista Graça e Paz    |
+
+**Cultos:**
+- Domingo 19h — Culto da Família
+- Sábado 19h — Culto da Juventude (Deep Life)
+- Quinta-feira 20h — Célula de Jovens
+- Primeira segunda do mês 20h — Culto das Mulheres
+- Última sexta do mês 20h — Culto dos Homens
+- Primeiro sábado do mês 8h–18h — Dia com Deus
+
+---
+
+## Dados da Instância (salvar em local seguro)
+
+| Campo              | Valor                                      |
+|--------------------|--------------------------------------------|
+| Nome da instância  | `gracapaz`                                 |
+| Número WhatsApp    | `5561920039423`                            |
+| Token da instância | (ver arquivo `.env`)                       |
+| Global API Key     | (ver arquivo `.env`)                       |
+
+---
+
+## Comandos Úteis
+
+```bash
+# Status dos containers
+docker-compose ps
+
+# Logs em tempo real
 docker-compose logs -f n8n
 docker-compose logs -f evolution-api
 
-# Parar todos os containers
-docker-compose down
+# Verificar estado da conexão WhatsApp
+curl http://localhost:8080/instance/connectionState/gracapaz \
+  -H "apikey: SEU_TOKEN"
 
-# Reiniciar um serviço específico
-docker-compose restart evolution-api
+# Reiniciar N8N (necessário após edições diretas no banco)
+docker restart n8n
 
-# Remover tudo (incluindo volumes)
-docker-compose down -v
+# Acessar banco de dados
+docker exec postgres psql -U root -d n8n
+
+# Ver execuções recentes do workflow
+docker exec postgres psql -U root -d n8n \
+  -c "SELECT id, status, \"startedAt\" FROM execution_entity ORDER BY id DESC LIMIT 10;"
 ```
 
-## 🌐 Cloudflare Tunnel (Opcional)
+---
 
-Para acesso remoto seguro:
+## Problemas Conhecidos e Soluções
 
-1. Crie um túnel no [Cloudflare Zero Trust](https://one.dash.cloudflare.com/)
-2. Copie o token gerado
-3. Adicione o token em `CLOUDFLARE_TUNNEL_TOKEN` no arquivo `.env`
-4. Descomente a seção `cloudflared` no `docker-compose.yml`
-5. Reinicie os containers: `docker-compose up -d`
+### QR Code não aparece (loop infinito)
+**Causa:** variável `CONFIG_SESSION_PHONE_VERSION` ausente ou incorreta.
+**Solução:** adicionar `CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690` no `.env` e reiniciar.
 
-## 🐛 Troubleshooting
+### Mensagens de contatos com `@lid` não são entregues
+**Causa:** Evolution API rejeita JIDs `@lid`.
+**Solução:** patch em `patches/main.js` (já incluído no repositório).
 
-### Erro de conexão com Redis
+### `n8n import:workflow` falha com FK constraint
+**Causa:** bug com tabela `workflow_publish_history` na v1.123.4.
+**Solução:** importar via UI do N8N ou atualizar diretamente via SQL.
 
-Se aparecerem erros "redis disconnected", isso é apenas um aviso. A Evolution API funciona normalmente sem o Redis, apenas com performance reduzida para cache.
+### Switch fallback não funciona (`fallbackOutput: "extra"`)
+**Causa:** bug no N8N v1.123.4.
+**Solução:** usar regra catch-all com `operation: "exists"` como última regra do Switch.
 
-### Portas já em uso
+### Nó HTTP retorna erro 400 "Bad Request"
+**Causa:** credencial não configurada no nó ou número inexistente no WhatsApp.
+**Solução:** verificar se todos os nós HTTP têm `credentials` definido com o ID correto.
 
-Se as portas 5678 ou 8080 já estiverem em uso, edite o `docker-compose.yml` e altere:
+---
 
-```yaml
-ports:
-  - "5679:5678"  # Altere 5679 para outra porta disponível
+## Estrutura de Arquivos
+
+```
+gracapaz/
+├── docker-compose.yml          # Configuração dos containers
+├── .env                        # Credenciais (NÃO commitar!)
+├── .env.example                # Modelo de configuração
+├── .gitignore
+├── README.md
+├── patches/
+│   └── main.js                 # Patch LID para Evolution API
+└── workflows/
+    └── bot-menu-principal.json # Workflow do bot (referência)
 ```
 
-### Evolution API não conecta ao WhatsApp
+---
 
-1. Acesse http://localhost:8080/manager
-2. Crie uma nova instância
-3. Escaneie o QR Code com seu WhatsApp
+## Segurança
 
-## 📝 Licença
-
-Este projeto é de código aberto. Sinta-se livre para usar e modificar.
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Por favor:
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## ⚠️ Avisos Importantes
-
-- Este sistema é para uso educacional e em ambientes autorizados
-- Respeite os Termos de Serviço do WhatsApp
-- Use responsavelmente e não envie spam
-- Sempre obtenha consentimento antes de enviar mensagens automatizadas
+- **Nunca** commite o arquivo `.env`
+- O `.gitignore` já protege `.env` e `patches/main.js` com dados sensíveis
+- Troque todos os tokens e senhas ao replicar em outro ambiente
