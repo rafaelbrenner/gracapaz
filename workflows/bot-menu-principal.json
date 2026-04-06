@@ -420,7 +420,7 @@
             },
             {
               "name": "text",
-              "value": "=Olá! Seja bem-vindo à Igreja Batista Graça e Paz 🙌\n\nComo podemos te ajudar hoje?\nDigite o número da opção desejada:\n\n1️⃣ Dias e horários dos cultos\n2️⃣ Cursos, seminários e células\n3️⃣ Eventos 2026\n4️⃣ Informações sobre inscrições\n5️⃣ Dízimos e Ofertas\n6️⃣ Gabinete Pastoral\n7️⃣ Falar com nossa equipe"
+              "value": "=Olá! Seja bem-vindo à Igreja Batista Graça e Paz 🙌\n\nComo podemos te ajudar hoje?\nDigite o número da opção desejada:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n📝 *4.* Informações sobre inscrições\n💚 *5.* Dízimos e Ofertas\n🗓 *6.* Gabinete Pastoral\n💬 *7.* Falar com nossa equipe"
             }
           ]
         },
@@ -456,7 +456,7 @@
             },
             {
               "name": "text",
-              "value": "1️⃣ Dias e horários dos cultos\n\n📍 *Culto de Celebração*\nDomingo | 19h\n\n🔥 *Culto da Juventude – Deep Life*\nSábado | 19h\n\n📖 *Célula de Jovens*\nQuinta-feira | 20h\n\n🌸 *Culto das Mulheres*\nPrimeira segunda-feira do mês | 20h\n\n🛡 *Culto dos Homens*\nÚltima sexta-feira do mês | 20h\n\n🙏 *Dia com Deus*\nPrimeiro sábado do mês | 8h às 18h\n\nDigite 0 para voltar ao menu."
+              "value": "⛪ *1. Dias e horários dos cultos*\n\n📍 *Culto de Celebração*\nDomingo | 19h\n\n🔥 *Culto da Juventude – Deep Life*\nSábado | 19h\n\n📖 *Célula de Jovens*\nQuinta-feira | 20h\n\n🌸 *Culto das Mulheres*\nPrimeira segunda-feira do mês | 20h\n\n🛡 *Culto dos Homens*\nÚltima sexta-feira do mês | 20h\n\n🙏 *Dia com Deus*\nPrimeiro sábado do mês | 8h às 18h\n\nDigite 0 para voltar ao menu."
             }
           ]
         },
@@ -492,7 +492,7 @@
             },
             {
               "name": "text",
-              "value": "2️⃣ Cursos, Seminários e Células\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nPara saber datas e inscrições, digite 4️⃣.\n\nDigite 0 para voltar ao menu."
+              "value": "📚 *2. Cursos, Seminários e Células*\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nPara saber datas e inscrições, digite *4*.\n\nDigite 0 para voltar ao menu."
             }
           ]
         },
@@ -528,7 +528,7 @@
             },
             {
               "name": "text",
-              "value": "3️⃣ Eventos 2026\n\nDigite o código do evento para saber mais:\n\n⌨️ *31* — Auto de Páscoa\n⌨️ *32* — Dia da Família\n⌨️ *33* — Imersão Deep Life\n⌨️ *34* — Festa do Milho\n\n⬅️ *0* — Voltar ao menu principal"
+              "value": "📅 *3. Eventos 2026*\n\nDigite o código do evento para saber mais:\n\n⌨️ *31* — Auto de Páscoa\n⌨️ *32* — Dia da Família\n⌨️ *33* — Imersão Deep Life\n⌨️ *34* — Festa do Milho\n\n⬅️ *0* — Voltar ao menu principal"
             }
           ]
         },
@@ -564,7 +564,7 @@
             },
             {
               "name": "text",
-              "value": "4️⃣ Inscrições\n\nPara se inscrever em eventos ou cursos:\n\n🔗 Acesse o link enviado pela igreja\n💳 Pagamento via Pix\n🏛 Ou presencialmente na igreja\n\n💬 Se precisar de ajuda, digite 5️⃣ para falar com nossa equipe.\n\nDigite 0 para voltar ao menu."
+              "value": "📝 *4. Inscrições*\n\nPara se inscrever em eventos ou cursos:\n\n🔗 Acesse o link enviado pela igreja\n💳 Pagamento via Pix\n🏛 Ou presencialmente na igreja\n\n💬 Se precisar de ajuda, digite *5* para falar com nossa equipe.\n\nDigite 0 para voltar ao menu."
             }
           ]
         },
@@ -600,7 +600,7 @@
             },
             {
               "name": "text",
-              "value": "7️⃣ Falar com nossa equipe\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏"
+              "value": "💬 *7. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏"
             }
           ]
         },
@@ -651,7 +651,7 @@
             },
             {
               "name": "text",
-              "value": "5️⃣ Dízimos e Ofertas\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu."
+              "value": "💚 *5. Dízimos e Ofertas*\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu."
             }
           ]
         },
@@ -687,7 +687,7 @@
             },
             {
               "name": "text",
-              "value": "6️⃣ Gabinete Pastoral 📅\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏"
+              "value": "🗓 *6. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏"
             }
           ]
         },
