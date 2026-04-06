@@ -790,6 +790,54 @@
           "name": "Header Auth account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendMedia/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone }}"
+            },
+            {
+              "name": "mediatype",
+              "value": "image"
+            },
+            {
+              "name": "mimetype",
+              "value": "image/jpeg"
+            },
+            {
+              "name": "media",
+              "value": "https://raw.githubusercontent.com/rafaelbrenner/gracapaz/gracapaz/assets/logo.jpeg"
+            },
+            {
+              "name": "caption",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-logo",
+      "name": "Enviar Logo",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7680,
+        4240
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1NHflsPDaOAzMRlR",
+          "name": "Header Auth account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -868,7 +916,7 @@
         ],
         [
           {
-            "node": "Enviar Menu de Boas-vindas",
+            "node": "Enviar Logo",
             "type": "main",
             "index": 0
           }
@@ -909,6 +957,17 @@
         [
           {
             "node": "Responder 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Logo": {
+      "main": [
+        [
+          {
+            "node": "Enviar Menu de Boas-vindas",
             "type": "main",
             "index": 0
           }
