@@ -179,30 +179,6 @@
                 "options": {
                   "version": 1,
                   "leftValue": "",
-                  "caseSensitive": true,
-                  "typeValidation": "strict"
-                },
-                "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "7d9ae5a5-21fa-4e2b-82c5-5ee036820a09",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "4"
-                  }
-                ]
-              },
-              "renameOutput": true,
-              "outputKey": "dizimo"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
                   "caseSensitive": false,
                   "typeValidation": "loose"
                 },
@@ -215,7 +191,7 @@
                       "operation": "equals"
                     },
                     "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "5"
+                    "rightValue": "4"
                   }
                 ]
               },
@@ -239,7 +215,7 @@
                       "operation": "equals"
                     },
                     "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "6"
+                    "rightValue": "5"
                   }
                 ]
               },
@@ -263,7 +239,7 @@
                       "operation": "equals"
                     },
                     "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "7"
+                    "rightValue": "6"
                   }
                 ]
               },
@@ -395,7 +371,7 @@
             },
             {
               "name": "text",
-              "value": "=Olá! Seja bem-vindo à Igreja Batista Graça e Paz 🙌\n\nComo podemos te ajudar hoje?\nDigite o número da opção desejada:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n📝 *4.* Informações sobre inscrições\n💚 *5.* Dízimos e Ofertas\n🗓 *6.* Gabinete Pastoral\n💬 *7.* Falar com nossa equipe\n\n📍 *Endereço:*\nSt. N QNN 39 - Ceilândia, Brasília - DF\nhttps://maps.app.goo.gl/ZQtoZofr2feWNUp97"
+              "value": "=Olá! Seja bem-vindo à Igreja Batista Graça e Paz 🙌\n\nComo podemos te ajudar hoje?\nDigite o número da opção desejada:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n💚 *4.* Dízimos e Ofertas\n🗓 *5.* Gabinete Pastoral\n💬 *6.* Falar com nossa equipe\n\n📍 *Endereço:*\nSt. N QNN 39 - Ceilândia, Brasília - DF\nhttps://maps.app.goo.gl/ZQtoZofr2feWNUp97"
             }
           ]
         },
@@ -467,7 +443,7 @@
             },
             {
               "name": "text",
-              "value": "📚 *2. Cursos, Seminários e Células*\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nPara saber datas e inscrições, digite *4*.\n\nDigite 0 para voltar ao menu."
+              "value": "📚 *2. Cursos, Seminários e Células*\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nDigite 0 para voltar ao menu."
             }
           ]
         },
@@ -539,43 +515,7 @@
             },
             {
               "name": "text",
-              "value": "📝 *4. Inscrições*\n\nPara se inscrever em eventos ou cursos:\n\n🔗 Acesse o link enviado pela igreja\n💳 Pagamento via Pix\n🏛 Ou presencialmente na igreja\n\n💬 Se precisar de ajuda, digite *5* para falar com nossa equipe.\n\nDigite 0 para voltar ao menu."
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "afe9a190-0373-444e-829e-dc0cf2edc6d9",
-      "name": "Enviar Info Dizimo",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7888,
-        3888
-      ],
-      "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "💬 *7. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏"
+              "value": "💬 *6. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏"
             }
           ]
         },
@@ -626,7 +566,7 @@
             },
             {
               "name": "text",
-              "value": "💚 *5. Dízimos e Ofertas*\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu."
+              "value": "💚 *4. Dízimos e Ofertas*\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu."
             }
           ]
         },
@@ -662,7 +602,7 @@
             },
             {
               "name": "text",
-              "value": "🗓 *6. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏"
+              "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏"
             }
           ]
         },
@@ -861,13 +801,6 @@
         [
           {
             "node": "Enviar Info Celulas",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Info Dizimo",
             "type": "main",
             "index": 0
           }
