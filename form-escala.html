@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Escala de Culto — Graça e Paz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:12px;padding:32px;width:100%;max-width:480px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.header{text-align:center;margin-bottom:28px}
+.header h1{font-size:1.4rem;color:#1a202c}
+.header p{color:#718096;margin-top:6px;font-size:.9rem}
+.field{margin-bottom:18px;position:relative}
+label{display:block;font-size:.85rem;font-weight:600;color:#4a5568;margin-bottom:6px}
+.req{color:#e53e3e}
+input,select{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.95rem;color:#2d3748;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:#4299e1}
+.acl{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.1);display:none}
+.aci{padding:10px 14px;cursor:pointer;font-size:.9rem;color:#2d3748}
+.aci:hover{background:#ebf8ff;color:#2b6cb0}
+button{width:100%;padding:12px;background:#2b6cb0;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;margin-top:8px}
+button:hover{background:#2c5282}
+button:disabled{background:#a0aec0;cursor:not-allowed}
+.ok{display:none;text-align:center;padding:24px}
+.ok .ic{font-size:3rem}
+.ok p{color:#2d3748;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>⛪ Escala de Culto</h1>
+    <p>Igreja Batista Graça e Paz</p>
+  </div>
+  <form id="f" autocomplete="off">
+    <div class="field">
+      <label>Nome do Membro <span class="req">*</span></label>
+      <input type="text" id="ni" placeholder="Digite o nome para buscar..." required>
+      <input type="hidden" id="nv">
+      <div class="acl" id="acl"></div>
+    </div>
+    <div class="field">
+      <label>Função <span class="req">*</span></label>
+      <select id="fn" required>
+        <option value="">Selecione...</option>
+        <option>Louvor</option>
+        <option>Recepção</option>
+        <option>Pregação</option>
+        <option>Som</option>
+        <option>Mídia / Projeção</option>
+        <option>Intercessão</option>
+        <option>Kids / Infantil</option>
+        <option>Coordenação</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Evento <span class="req">*</span></label>
+      <input type="text" id="ev" placeholder="Ex: Culto Domingo, Reunião de Oração" required>
+    </div>
+    <div class="field">
+      <label>Data <span class="req">*</span></label>
+      <input type="date" id="dt" required>
+    </div>
+    <div class="field">
+      <label>Horário <span class="req">*</span></label>
+      <input type="time" id="hr" required>
+    </div>
+    <div class="field">
+      <label>Registrado por</label>
+      <input type="text" id="rg" placeholder="Seu nome (opcional)">
+    </div>
+    <button type="submit" id="btn">Registrar Escala</button>
+  </form>
+  <div class="ok" id="ok">
+    <div class="ic">✅</div>
+    <p><strong>Escala registrada!</strong><br>O membro receberá notificação pelo WhatsApp em breve.</p>
+  </div>
+</div>
+<script>
+const API = 'http://204.168.230.157:5678/webhook';
+let sel = null, tmr;
+const ni = document.getElementById('ni');
+const nv = document.getElementById('nv');
+const acl = document.getElementById('acl');
+
+ni.addEventListener('input', function() {
+  clearTimeout(tmr);
+  sel = null;
+  nv.value = '';
+  const q = this.value.trim();
+  if (q.length < 2) { acl.style.display = 'none'; return; }
+  tmr = setTimeout(() => buscar(q), 300);
+});
+
+async function buscar(q) {
+  try {
+    const r = await fetch(API + '/buscar-membro?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    renderList(d);
+  } catch(e) { acl.style.display = 'none'; }
+}
+
+function renderList(items) {
+  if (!items || !items.length) { acl.style.display = 'none'; return; }
+  acl.innerHTML = items.map(m =>
+    '<div class="aci" data-nome="' + m.nome + '" data-cel="' + (m.celular_whatsapp || '') + '">' + m.nome + '</div>'
+  ).join('');
+  acl.style.display = 'block';
+  acl.querySelectorAll('.aci').forEach(i => i.addEventListener('click', function() {
+    sel = { nome: this.dataset.nome, cel: this.dataset.cel };
+    ni.value = this.dataset.nome;
+    nv.value = this.dataset.nome;
+    acl.style.display = 'none';
+  }));
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.field')) acl.style.display = 'none';
+});
+
+document.getElementById('f').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  if (!nv.value) { alert('Selecione um membro da lista.'); ni.focus(); return; }
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+  try {
+    await fetch(API + '/form-escala-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: nv.value,
+        celular: sel?.cel || '',
+        funcao: document.getElementById('fn').value,
+        evento: document.getElementById('ev').value,
+        data: document.getElementById('dt').value,
+        hora: document.getElementById('hr').value,
+        registrado_por: document.getElementById('rg').value
+      })
+    });
+    document.getElementById('f').style.display = 'none';
+    document.getElementById('ok').style.display = 'block';
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = 'Registrar Escala';
+    alert('Erro ao registrar. Tente novamente.');
+  }
+});
+</script>
+</body>
+</html>

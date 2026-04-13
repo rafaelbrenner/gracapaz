@@ -1,0 +1,138 @@
+{
+  "name": "Eklesia - Formulário de Escala",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Escala de Culto — Graça e Paz",
+        "formDescription": "Preencha os dados da escala. O membro receberá uma notificação automática pelo WhatsApp.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nome do Membro",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "Nome completo como cadastrado no sistema"
+            },
+            {
+              "fieldLabel": "Celular (se não encontrar no sistema)",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "61999999999 (apenas números)"
+            },
+            {
+              "fieldLabel": "Função",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  { "option": "Louvor" },
+                  { "option": "Recepção" },
+                  { "option": "Pregação" },
+                  { "option": "Som" },
+                  { "option": "Mídia / Projeção" },
+                  { "option": "Intercessão" },
+                  { "option": "Kids / Infantil" },
+                  { "option": "Coordenação" },
+                  { "option": "Outro" }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Evento",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "Ex: Culto Domingo Manhã, Reunião de Oração"
+            },
+            {
+              "fieldLabel": "Data",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Hora",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "Ex: 09:00 ou 19:30"
+            },
+            {
+              "fieldLabel": "Registrado por",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "Seu nome (opcional)"
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "responseText": "✅ Escala registrada com sucesso! O membro receberá uma notificação pelo WhatsApp em breve."
+      },
+      "id": "node-form-trigger",
+      "name": "Formulário de Escala",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [200, 300],
+      "webhookId": "eklesia-form-escala"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT codigo, nome, celular_whatsapp\nFROM gp_membros\nWHERE nome ILIKE '%{{ $json['Nome do Membro'].replace(/'/g, \"''\") }}%'\n  AND celular_whatsapp != ''\nORDER BY similarity(nome, '{{ $json['Nome do Membro'].replace(/'/g, \"''\") }}') DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "id": "node-buscar-membro",
+      "name": "Buscar Membro no Banco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 300],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $('Formulário de Escala').first().json;\nconst dbResult = $input.first().json;\n\n// Usa celular do banco se encontrado, senão usa o digitado no formulário\nlet celularWA = dbResult.celular_whatsapp || '';\nlet membroCodigo = dbResult.codigo || null;\nlet membroNome = dbResult.nome || form['Nome do Membro'];\n\nif (!celularWA && form['Celular (se não encontrar no sistema)']) {\n  const digits = form['Celular (se não encontrar no sistema)'].replace(/\\D/g, '');\n  celularWA = digits.startsWith('55') ? digits : '55' + digits;\n}\n\nif (!celularWA) {\n  throw new Error(`Celular não encontrado para: ${form['Nome do Membro']}. Informe o celular manualmente.`);\n}\n\n// Formata a data\nconst dataRaw = form['Data'] || '';\nconst dataFormatada = dataRaw.substring(0, 10); // YYYY-MM-DD\n\nreturn [{ json: {\n  membro_codigo:    membroCodigo,\n  membro_nome:      membroNome,\n  celular_whatsapp: celularWA,\n  funcao:           form['Função'],\n  evento:           form['Evento'],\n  data_evento:      dataFormatada,\n  hora_evento:      form['Hora'],\n  criado_por:       form['Registrado por'] || 'Formulário'\n}}];"
+      },
+      "id": "node-preparar-dados",
+      "name": "Preparar Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO gp_escala\n  (membro_codigo, membro_nome, celular_whatsapp, funcao, evento, data_evento, hora_evento, status, criado_por)\nVALUES\n  (\n    {{ $json.membro_codigo || 'NULL' }},\n    '{{ $json.membro_nome.replace(/'/g, \"''\") }}',\n    '{{ $json.celular_whatsapp }}',\n    '{{ $json.funcao.replace(/'/g, \"''\") }}',\n    '{{ $json.evento.replace(/'/g, \"''\") }}',\n    '{{ $json.data_evento }}',\n    '{{ $json.hora_evento }}',\n    'pendente',\n    '{{ ($json.criado_por || '').replace(/'/g, \"''\") }}'\n  )\nRETURNING id;",
+        "options": {}
+      },
+      "id": "node-salvar-escala",
+      "name": "Salvar Escala no Banco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [880, 300],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Formulário de Escala": {
+      "main": [[{ "node": "Buscar Membro no Banco", "type": "main", "index": 0 }]]
+    },
+    "Buscar Membro no Banco": {
+      "main": [[{ "node": "Preparar Dados", "type": "main", "index": 0 }]]
+    },
+    "Preparar Dados": {
+      "main": [[{ "node": "Salvar Escala no Banco", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["eklesia", "formulario", "escala"],
+  "triggerCount": 1,
+  "versionId": "eklesia-form-v1"
+}

@@ -1,0 +1,139 @@
+{
+  "name": "Eklesia - Notificação de Escala via WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [1, 2, 3, 4, 5],
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Toda Quinta 9h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [200, 200]
+    },
+    {
+      "parameters": {},
+      "id": "node-manual",
+      "name": "Testar Manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 380]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, membro_nome, celular_whatsapp, funcao, evento, TO_CHAR(data_evento, 'DD/MM/YYYY') AS data_formatada, hora_evento FROM gp_escala WHERE status = 'pendente' ORDER BY data_evento, hora_evento;",
+        "options": {}
+      },
+      "id": "node-buscar-escala",
+      "name": "Buscar Escalas Pendentes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 280],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const input of $input.all()) {\n  const item = input.json;\n  const primeiroNome = (item.membro_nome || 'Irmão(ã)').split(' ')[0];\n  const funcao = item.funcao || 'escala';\n  const data = item.data_formatada || '';\n  const hora = item.hora_evento || '';\n  const evento = item.evento || 'Culto';\n\n  const mensagem =\n    `Olá ${primeiroNome}! 🙏\\n\\n` +\n    `Você está na escala da nossa igreja:\\n\\n` +\n    `📋 *${evento}*\\n` +\n    `🎯 Função: *${funcao}*\\n` +\n    `📅 Data: *${data}*\\n` +\n    `🕐 Horário: *${hora}*\\n\\n` +\n    `Confirma sua presença? Responda:\\n` +\n    `✅ *SIM* — Confirmado\\n` +\n    `❌ *NÃO* — Não poderei ir\\n\\n` +\n    `_Deus abençoe! — Igreja Batista Graça e Paz_`;\n\n  results.push({ json: { ...item, mensagem } });\n}\n\nreturn results;"
+      },
+      "id": "node-montar-mensagem",
+      "name": "Montar Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://SEU_IP:8080/message/sendText/gracapaz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "EVOLUTION_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $json.celular_whatsapp }}" },
+            { "name": "text", "value": "={{ $json.mensagem }}" }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "id": "node-enviar-whatsapp",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 280],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE gp_escala SET status = 'enviado', enviado_em = NOW() WHERE status = 'pendente';",
+        "options": {}
+      },
+      "id": "node-atualizar-status",
+      "name": "Marcar como Enviado",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1120, 280],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Toda Quinta 9h": {
+      "main": [[{ "node": "Buscar Escalas Pendentes", "type": "main", "index": 0 }]]
+    },
+    "Testar Manualmente": {
+      "main": [[{ "node": "Buscar Escalas Pendentes", "type": "main", "index": 0 }]]
+    },
+    "Buscar Escalas Pendentes": {
+      "main": [[{ "node": "Montar Mensagem", "type": "main", "index": 0 }]]
+    },
+    "Montar Mensagem": {
+      "main": [[{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }]]
+    },
+    "Enviar WhatsApp": {
+      "main": [[{ "node": "Marcar como Enviado", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["eklesia", "escala", "whatsapp"],
+  "triggerCount": 2,
+  "versionId": "eklesia-notif-v2"
+}

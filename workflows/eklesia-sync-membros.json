@@ -1,0 +1,105 @@
+{
+  "name": "Eklesia - Sincronizar Membros → PostgreSQL",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-manual-trigger",
+      "name": "Executar Manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gera array de páginas (100 registros por página)\n// 716 membros = 8 páginas, geramos até 10 por segurança\nconst paginas = [];\nfor (let i = 0; i <= 10; i++) {\n  paginas.push({ json: { pagina: i } });\n}\nreturn paginas;"
+      },
+      "id": "node-gerar-paginas",
+      "name": "Gerar Páginas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://gestaoweb.eklesiaonline.com.br/webapi/api/Integracoes/Pessoa",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer EKLESIA_JWT_TOKEN"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "pagina", "value": "={{ $json.pagina }}" }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1500
+            }
+          }
+        }
+      },
+      "id": "node-buscar-eklesia",
+      "name": "Buscar Página Eklesia",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai registros de todas as páginas e normaliza\n// Importa apenas FREQUENTADORES\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const registros = item.json.registros || [];\n  for (const r of registros) {\n    // Exclui membros inativos\n    const arrolamento = (r.descricaoArrolamento || '').trim().toUpperCase();\n    const inativo = arrolamento.startsWith('DEMISSAO') ||\n                    arrolamento === 'CRIANÇAS APRESENTADAS NA IGREJA' ||\n                    arrolamento === 'FAMILIAS ASSISTIDAS PELA IGREJA';\n    if (inativo) continue;\n\n    const celularRaw = r.celular || '';\n    const digits = celularRaw.replace(/\\D/g, '');\n    const celularWA = digits.length >= 10\n      ? (digits.startsWith('55') ? digits : '55' + digits)\n      : '';\n\n    resultados.push({ json: {\n      codigo:           r.codigo,\n      nome:             r.nome || '',\n      celular:          celularRaw,\n      celular_whatsapp: celularWA,\n      email:            r.email || '',\n      sexo:             r.sexo || '',\n      arrolamento:      r.descricaoArrolamento || '',\n      data_arrolamento: r.dataArrolamento ? r.dataArrolamento.substring(0, 10) : null,\n      igreja:           r.descricaoIgreja || ''\n    }});\n  }\n}\n\nreturn resultados.length > 0 ? resultados : [];"
+      },
+      "id": "node-extrair",
+      "name": "Extrair Registros",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO gp_membros (codigo, nome, celular, celular_whatsapp, email, sexo, arrolamento, data_arrolamento, igreja, sincronizado_em)\nVALUES (\n  {{ $json.codigo }},\n  '{{ $json.nome.replace(/'/g, \"''\") }}',\n  '{{ $json.celular }}',\n  '{{ $json.celular_whatsapp }}',\n  '{{ $json.email }}',\n  '{{ $json.sexo }}',\n  '{{ $json.arrolamento }}',\n  {{ $json.data_arrolamento ? `'${$json.data_arrolamento}'` : 'NULL' }},\n  '{{ $json.igreja }}',\n  NOW()\n)\nON CONFLICT (codigo) DO UPDATE SET\n  nome             = EXCLUDED.nome,\n  celular          = EXCLUDED.celular,\n  celular_whatsapp = EXCLUDED.celular_whatsapp,\n  email            = EXCLUDED.email,\n  arrolamento      = EXCLUDED.arrolamento,\n  sincronizado_em  = NOW();",
+        "options": {}
+      },
+      "id": "node-upsert-db",
+      "name": "Salvar no PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 300],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Executar Manualmente": {
+      "main": [[{ "node": "Gerar Páginas", "type": "main", "index": 0 }]]
+    },
+    "Gerar Páginas": {
+      "main": [[{ "node": "Buscar Página Eklesia", "type": "main", "index": 0 }]]
+    },
+    "Buscar Página Eklesia": {
+      "main": [[{ "node": "Extrair Registros", "type": "main", "index": 0 }]]
+    },
+    "Extrair Registros": {
+      "main": [[{ "node": "Salvar no PostgreSQL", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["eklesia", "sync"],
+  "triggerCount": 0,
+  "versionId": "eklesia-sync-pg-v1"
+}

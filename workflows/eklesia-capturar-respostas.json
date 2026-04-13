@@ -1,0 +1,236 @@
+{
+  "name": "Eklesia - Capturar Respostas de Escala",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "escala-gateway",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook Gateway",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [200, 300],
+      "webhookId": "escala-gateway"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "equals" }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "messages.upsert",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "node-filtrar-mensagens",
+      "name": "Somente Mensagens Recebidas",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.body.data;\nconst body = $input.first().json.body;\n\nconst jid = data.key.remoteJid || '';\n\n// Ignora grupos\nif (jid.includes('@g.us')) {\n  return [{ json: { _ignorar: true } }];\n}\n\nconst isLid = jid.endsWith('@lid');\n\n// Extrai número do JID quando possível\nlet phoneNorm = '';\nif (!isLid) {\n  const raw = jid.replace('@s.whatsapp.net', '');\n  if (raw.startsWith('55') && raw.length === 12) {\n    phoneNorm = raw.substring(0, 4) + '9' + raw.substring(4);\n  } else {\n    phoneNorm = raw;\n  }\n}\n\n// Texto da mensagem\nconst texto = (\n  data.message?.conversation ??\n  data.message?.extendedTextMessage?.text ??\n  ''\n).trim().toLowerCase();\n\n// Nome do contato — remove emojis e caracteres especiais, mantém só letras e espaços\nconst nomeLimpo = (data.pushName || '')\n  .replace(/[^\\p{L}\\s]/gu, '')  // remove emojis e símbolos\n  .trim()\n  .split(/\\s+/)\n  .slice(0, 2)  // usa só primeiro e segundo nome\n  .join(' ');\nconst nome = nomeLimpo.replace(/'/g, \"''\");\n\nreturn [{ json: {\n  phoneJid: jid,   // JID original para enviar a resposta\n  phoneNorm,       // número normalizado para buscar no banco\n  isLid,\n  texto,\n  nome,\n  rawBody: body\n} }];"
+      },
+      "id": "node-extrair-dados",
+      "name": "Extrair Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "loose" },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.texto }}",
+              "rightValue": "sim",
+              "operator": { "type": "string", "operation": "equals", "ignoreCase": true }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.texto }}",
+              "rightValue": "não",
+              "operator": { "type": "string", "operation": "equals", "ignoreCase": true }
+            },
+            {
+              "id": "c3",
+              "leftValue": "={{ $json.texto }}",
+              "rightValue": "nao",
+              "operator": { "type": "string", "operation": "equals", "ignoreCase": true }
+            }
+          ]
+        }
+      },
+      "id": "node-e-sim-nao",
+      "name": "É SIM ou NÃO?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, membro_nome, celular_whatsapp, funcao, evento, TO_CHAR(data_evento, 'DD/MM/YYYY') AS data_formatada FROM gp_escala WHERE status = 'enviado' AND ((celular_whatsapp = '{{ $json.phoneNorm }}' AND '{{ $json.phoneNorm }}' != '') OR (LENGTH('{{ $json.nome }}') > 2 AND membro_nome ILIKE '%{{ $json.nome }}%')) ORDER BY data_evento DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "node-buscar-escala",
+      "name": "Buscar na Escala",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1080, 100],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "loose" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ]
+        }
+      },
+      "id": "node-encontrou",
+      "name": "Encontrou na Escala?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1300, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const escala = $input.first().json;\nconst dadosMsg = $('Extrair Dados').first().json;\n\nconst texto = dadosMsg.texto;\nconst novoStatus = (texto === 'sim') ? 'confirmado' : 'recusado';\nconst primeiroNome = dadosMsg.nome.split(' ')[0];\n\nlet resposta;\nif (novoStatus === 'confirmado') {\n  resposta =\n    `✅ Presença *confirmada*, ${primeiroNome}!\\n\\n` +\n    `Estamos te esperando:\\n` +\n    `📋 *${escala.evento}*\\n` +\n    `🎯 Função: *${escala.funcao}*\\n` +\n    `📅 Data: *${escala.data_formatada}*\\n\\n` +\n    `Que Deus abençoe seu serviço! 🙏\\n` +\n    `_Igreja Batista Graça e Paz_`;\n} else {\n  resposta =\n    `Entendemos, ${primeiroNome}. ❌\\n\\n` +\n    `Sua *ausência foi registrada* para:\\n` +\n    `📋 *${escala.evento}* — ${escala.data_formatada}\\n\\n` +\n    `Em breve entraremos em contato.\\n` +\n    `_Igreja Batista Graça e Paz_`;\n}\n\nreturn [{ json: {\n  escalaId: escala.id,\n  novoStatus,\n  resposta,\n  phoneJid: dadosMsg.phoneJid\n} }];"
+      },
+      "id": "node-preparar-resposta",
+      "name": "Preparar Resposta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 100]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE gp_escala SET status = '{{ $json.novoStatus }}', enviado_em = NOW() WHERE id = {{ $json.escalaId }};",
+        "options": {}
+      },
+      "id": "node-atualizar-status",
+      "name": "Atualizar Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1740, 100],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://SEU_IP:8080/message/sendText/gracapaz",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "EVOLUTION_API_KEY" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Preparar Resposta').first().json.phoneJid }}" },
+            { "name": "text", "value": "={{ $('Preparar Resposta').first().json.resposta }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-responder-whatsapp",
+      "name": "Responder WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://SEU_IP:5678/webhook/gracapaz",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Webhook Gateway').first().json.body) }}",
+        "options": {}
+      },
+      "id": "node-encaminhar-bot",
+      "name": "Encaminhar ao Bot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 380]
+    }
+  ],
+  "connections": {
+    "Webhook Gateway": {
+      "main": [[{ "node": "Somente Mensagens Recebidas", "type": "main", "index": 0 }]]
+    },
+    "Somente Mensagens Recebidas": {
+      "main": [
+        [{ "node": "Extrair Dados", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Extrair Dados": {
+      "main": [[{ "node": "É SIM ou NÃO?", "type": "main", "index": 0 }]]
+    },
+    "É SIM ou NÃO?": {
+      "main": [
+        [{ "node": "Buscar na Escala", "type": "main", "index": 0 }],
+        [{ "node": "Encaminhar ao Bot", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar na Escala": {
+      "main": [[{ "node": "Encontrou na Escala?", "type": "main", "index": 0 }]]
+    },
+    "Encontrou na Escala?": {
+      "main": [
+        [{ "node": "Preparar Resposta", "type": "main", "index": 0 }],
+        [{ "node": "Encaminhar ao Bot", "type": "main", "index": 0 }]
+      ]
+    },
+    "Preparar Resposta": {
+      "main": [[{ "node": "Atualizar Status", "type": "main", "index": 0 }]]
+    },
+    "Atualizar Status": {
+      "main": [[{ "node": "Responder WhatsApp", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["eklesia", "respostas", "escala"],
+  "triggerCount": 1,
+  "versionId": "eklesia-respostas-v1"
+}

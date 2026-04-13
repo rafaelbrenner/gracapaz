@@ -1,0 +1,70 @@
+{
+  "name": "Eklesia - Form Escala Submit",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "form-escala-submit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-submit",
+      "name": "Webhook Submit",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [200, 300],
+      "webhookId": "form-escala-submit"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO gp_escala (membro_nome, celular_whatsapp, funcao, evento, data_evento, hora_evento, status, criado_por) VALUES ('{{ $json.body.nome.replace(/'/g, \"''\") }}', '{{ $json.body.celular }}', '{{ $json.body.funcao }}', '{{ $json.body.evento.replace(/'/g, \"''\") }}', '{{ $json.body.data }}', '{{ $json.body.hora }}', 'pendente', '{{ ($json.body.registrado_por || '').replace(/'/g, \"''\") }}');",
+        "options": {}
+      },
+      "id": "node-inserir",
+      "name": "Inserir na Escala",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [420, 300],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={\"ok\":true}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" },
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "node-respond",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [640, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Submit": {
+      "main": [[{ "node": "Inserir na Escala", "type": "main", "index": 0 }]]
+    },
+    "Inserir na Escala": {
+      "main": [[{ "node": "Responder OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["eklesia", "formulario"],
+  "triggerCount": 1,
+  "versionId": "eklesia-form-submit-v1"
+}

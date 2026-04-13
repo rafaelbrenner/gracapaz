@@ -1,0 +1,82 @@
+{
+  "name": "Eklesia - API Buscar Membro",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "buscar-membro",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-buscar",
+      "name": "Webhook Buscar Membro",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [200, 300],
+      "webhookId": "buscar-membro-api"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT nome, celular_whatsapp FROM gp_membros WHERE nome ILIKE '%{{ $json.query.q }}%' AND celular_whatsapp != '' ORDER BY nome LIMIT 10;",
+        "options": {}
+      },
+      "id": "node-buscar",
+      "name": "Buscar Membros",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [420, 300],
+      "credentials": {
+        "postgres": {
+          "id": "ADICIONAR_CREDENCIAL_POSTGRES",
+          "name": "PostgreSQL Igreja"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn [{ json: { result: items.map(i => i.json) } }];"
+      },
+      "id": "node-collect",
+      "name": "Montar Array",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ JSON.stringify($json.result) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" },
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "node-respond",
+      "name": "Retornar JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [860, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Buscar Membro": {
+      "main": [[{ "node": "Buscar Membros", "type": "main", "index": 0 }]]
+    },
+    "Buscar Membros": {
+      "main": [[{ "node": "Montar Array", "type": "main", "index": 0 }]]
+    },
+    "Montar Array": {
+      "main": [[{ "node": "Retornar JSON", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["eklesia", "api"],
+  "triggerCount": 1,
+  "versionId": "eklesia-buscar-membro-v1"
+}

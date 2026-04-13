@@ -10,37 +10,25 @@
       "id": "9beeddcc-17e2-415f-a491-694781cc3b05",
       "name": "Webhook Evolution API",
       "type": "n8n-nodes-base.webhook",
-      "position": [
-        6624,
-        3600
-      ],
+      "position": [6624, 3600],
       "webhookId": "75b51a91-68a1-46ca-8a83-942e12f57915",
       "typeVersion": 1.1
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
           "combinator": "and",
           "conditions": [
             {
               "id": "c1",
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              },
+              "operator": { "type": "boolean", "operation": "equals" },
               "leftValue": "={{ $json.body.data.key.fromMe }}",
               "rightValue": false
             },
             {
               "id": "c2",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              },
+              "operator": { "type": "string", "operation": "equals" },
               "leftValue": "={{ $json.body.event }}",
               "rightValue": "messages.upsert"
             }
@@ -51,10 +39,7 @@
       "id": "f777507e-f276-4e89-b683-21c7284d5127",
       "name": "Somente Mensagens Recebidas",
       "type": "n8n-nodes-base.if",
-      "position": [
-        6912,
-        3600
-      ],
+      "position": [6912, 3600],
       "typeVersion": 2
     },
     {
@@ -92,10 +77,7 @@
       "id": "c26d018e-80b1-4642-b740-4fe68d2c9725",
       "name": "Extrair Dados da Mensagem",
       "type": "n8n-nodes-base.set",
-      "position": [
-        7216,
-        3584
-      ],
+      "position": [7216, 3584],
       "typeVersion": 3.3
     },
     {
@@ -104,241 +86,90 @@
           "values": [
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": true,
-                  "typeValidation": "strict"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": true, "typeValidation": "strict" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "1f2fb19c-1cb8-4814-8d1c-ffca78aff9e9",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "1"
-                  }
-                ]
+                "conditions": [{ "id": "1f2fb19c-1cb8-4814-8d1c-ffca78aff9e9", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "1" }]
               },
               "renameOutput": true,
               "outputKey": "horarios"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": true,
-                  "typeValidation": "strict"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": true, "typeValidation": "strict" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "15ae5da6-fe9a-4f95-b018-54d0c3426b68",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "2"
-                  }
-                ]
+                "conditions": [{ "id": "15ae5da6-fe9a-4f95-b018-54d0c3426b68", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "2" }]
               },
               "renameOutput": true,
               "outputKey": "oracao"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": true,
-                  "typeValidation": "strict"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": true, "typeValidation": "strict" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "2fd15882-e3af-4041-82a8-04b133c45a54",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "3"
-                  }
-                ]
+                "conditions": [{ "id": "2fd15882-e3af-4041-82a8-04b133c45a54", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "3" }]
               },
               "renameOutput": true,
               "outputKey": "celulas"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": false,
-                  "typeValidation": "loose"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "0858482d-7777-48b4-b843-cf3aeb727573",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "4"
-                  }
-                ]
+                "conditions": [{ "id": "0858482d-7777-48b4-b843-cf3aeb727573", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "4" }]
               },
               "renameOutput": true,
               "outputKey": "dizimos"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": false,
-                  "typeValidation": "loose"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "139f8b60-8e4e-4a48-842c-8c3234224bc4",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "5"
-                  }
-                ]
+                "conditions": [{ "id": "139f8b60-8e4e-4a48-842c-8c3234224bc4", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "5" }]
               },
               "renameOutput": true,
               "outputKey": "pastoral"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": true,
-                  "typeValidation": "strict"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": true, "typeValidation": "strict" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "f68446a0-c37a-40d7-a80d-e2a207afac36",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "6"
-                  }
-                ]
+                "conditions": [{ "id": "f68446a0-c37a-40d7-a80d-e2a207afac36", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "6" }]
               },
               "renameOutput": true,
               "outputKey": "versiculo"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": false,
-                  "typeValidation": "loose"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "5d7f1797-ac76-48d1-97c9-1ae6a51fbf86",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "31"
-                  }
-                ]
+                "conditions": [{ "id": "5d7f1797-ac76-48d1-97c9-1ae6a51fbf86", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "31" }]
               },
               "renameOutput": true,
               "outputKey": "pascoa"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": false,
-                  "typeValidation": "loose"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "6ce0e513-873a-49b1-b0cb-c856f3bebb78",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "32"
-                  }
-                ]
+                "conditions": [{ "id": "6ce0e513-873a-49b1-b0cb-c856f3bebb78", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "32" }]
               },
               "renameOutput": true,
               "outputKey": "familia"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": false,
-                  "typeValidation": "loose"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "5cad046d-5a6c-465f-a224-53a9acdbf777",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": "34"
-                  }
-                ]
+                "conditions": [{ "id": "5cad046d-5a6c-465f-a224-53a9acdbf777", "operator": { "type": "string", "operation": "equals" }, "leftValue": "={{ $json.mensagem }}", "rightValue": "34" }]
               },
               "renameOutput": true,
               "outputKey": "milho"
             },
             {
               "conditions": {
-                "options": {
-                  "version": 1,
-                  "leftValue": "",
-                  "caseSensitive": false,
-                  "typeValidation": "loose"
-                },
+                "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [
-                  {
-                    "id": "1db129c9-74cd-4d3f-82c0-4345d825b5ce",
-                    "operator": {
-                      "type": "string",
-                      "operation": "exists",
-                      "singleValue": true
-                    },
-                    "leftValue": "={{ $json.mensagem }}",
-                    "rightValue": ""
-                  }
-                ]
+                "conditions": [{ "id": "1db129c9-74cd-4d3f-82c0-4345d825b5ce", "operator": { "type": "string", "operation": "exists", "singleValue": true }, "leftValue": "={{ $json.mensagem }}", "rightValue": "" }]
               },
               "renameOutput": true,
               "outputKey": "menu"
@@ -350,10 +181,7 @@
       "id": "c72b66be-47ca-42d7-b93b-f7bc342e2127",
       "name": "Roteador de Opcoes",
       "type": "n8n-nodes-base.switch",
-      "position": [
-        7440,
-        3584
-      ],
+      "position": [7440, 3584],
       "typeVersion": 3
     },
     {
@@ -365,14 +193,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $('Extrair Dados da Mensagem').item.json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "=Não entendi sua mensagem. 😊\n\nPor favor, digite o *número* de uma das opções:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n💚 *4.* Dízimos e Ofertas\n🗓 *5.* Gabinete Pastoral\n💬 *6.* Falar com nossa equipe\n\n📍 *Endereço:*\nSt. N QNN 39 - Ceilândia, Brasília - DF\nhttps://maps.app.goo.gl/ZQtoZofr2feWNUp97"
-            }
+            { "name": "number", "value": "={{ $('Extrair Dados da Mensagem').item.json.telefone }}" },
+            { "name": "text", "value": "=Olá, {{ $('Extrair Dados da Mensagem').item.json.nome }}! 👋\n\nSeja bem-vindo(a) à *Igreja Batista Graça e Paz*! 🙏\n\nComo posso te ajudar? Digite o *número* de uma das opções:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n💚 *4.* Dízimos e Ofertas\n🗓 *5.* Gabinete Pastoral\n💬 *6.* Falar com nossa equipe" }
           ]
         },
         "options": {}
@@ -380,17 +202,9 @@
       "id": "2ac56ed9-d1da-4913-a157-b715eceaee95",
       "name": "Enviar Menu de Boas-vindas",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7872,
-        4240
-      ],
+      "position": [7872, 4240],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -401,14 +215,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "⛪ *1. Dias e horários dos cultos*\n\n📍 *Culto de Celebração*\nDomingo | 19h\n\n🔥 *Culto da Juventude – Deep Life*\nSábado | 19h\n\n📖 *Célula de Jovens*\nQuinta-feira | 20h\n\n🌸 *Culto das Mulheres*\nPrimeira segunda-feira do mês | 20h\n\n🛡 *Culto dos Homens*\nÚltima sexta-feira do mês | 20h\n\n🙏 *Dia com Deus*\nPrimeiro sábado do mês | 8h às 18h\n\nDigite 0 para voltar ao menu."
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "⛪ *1. Dias e horários dos cultos*\n\n📍 *Culto de Celebração*\nDomingo | 19h\n\n🔥 *Culto da Juventude – Deep Life*\nSábado | 19h\n\n📖 *Célula de Jovens*\nQuinta-feira | 20h\n\n🌸 *Culto das Mulheres*\nPrimeira segunda-feira do mês | 20h\n\n🛡 *Culto dos Homens*\nÚltima sexta-feira do mês | 20h\n\n🙏 *Dia com Deus*\nPrimeiro sábado do mês | 8h às 18h\n\nDigite 0 para voltar ao menu." }
           ]
         },
         "options": {}
@@ -416,17 +224,9 @@
       "id": "e2a67c91-798b-4008-828a-4eedd40383e0",
       "name": "Enviar Horarios",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7872,
-        3328
-      ],
+      "position": [7872, 3328],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -437,14 +237,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "📚 *2. Cursos, Seminários e Células*\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nDigite 0 para voltar ao menu."
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "📚 *2. Cursos, Seminários e Células*\n\nA igreja oferece cursos para crescimento espiritual e fortalecimento familiar:\n\n✨ Mulher Única\n💪 Homem ao Máximo\n💍 Curso Aliança\n🏡 Experiência do Lar\n📚 Clube do Livro\n\nDigite 0 para voltar ao menu." }
           ]
         },
         "options": {}
@@ -452,17 +246,9 @@
       "id": "25d407f5-9277-4d01-ae3c-726056ce4a59",
       "name": "Enviar Pedido de Oracao",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7888,
-        3520
-      ],
+      "position": [7888, 3520],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -473,14 +259,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "📅 *3. Eventos 2026*\n\nDigite o código do evento para saber mais:\n\n✝️ *31* — Auto de Páscoa\n👨‍👩‍👧 *32* — IV Festa da Família\n🌽 *34* — Festa do Milho\n\n⬅️ *0* — Voltar ao menu principal"
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "📅 *3. Eventos 2026*\n\nDigite o código do evento para saber mais:\n\n✝️ *31* — Auto de Páscoa\n👨‍👩‍👧 *32* — IV Festa da Família\n🌽 *34* — Festa do Milho\n\n⬅️ *0* — Voltar ao menu principal" }
           ]
         },
         "options": {}
@@ -488,17 +268,9 @@
       "id": "282b4fdc-bfcd-406b-ba4e-78138021e3b9",
       "name": "Enviar Info Celulas",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7872,
-        3712
-      ],
+      "position": [7872, 3712],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -509,14 +281,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "💬 *6. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏"
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "💬 *6. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏" }
           ]
         },
         "options": {}
@@ -524,17 +290,9 @@
       "id": "cc739299-d490-446e-9958-f0bbdc184727",
       "name": "Enviar Gabinete Pastoral",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7872,
-        4032
-      ],
+      "position": [7872, 4032],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -545,10 +303,7 @@
       "id": "dd50befb-3809-4056-9f57-48211bb56cfe",
       "name": "Responder 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
-      "position": [
-        6944,
-        4016
-      ],
+      "position": [6944, 4016],
       "typeVersion": 1.1
     },
     {
@@ -560,14 +315,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "💚 *4. Dízimos e Ofertas*\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu."
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "💚 *4. Dízimos e Ofertas*\n\nContribua com a obra de Deus:\n\n💚 PIX (CNPJ): 14.853.562/0001-92\nNome: Igreja Batista Graça e Paz\n\nVocê também pode contribuir presencialmente nos cultos.\n\nDigite 0 para voltar ao menu." }
           ]
         },
         "options": {}
@@ -575,17 +324,9 @@
       "id": "81741910-af25-4c3b-8f2a-8f9117397d50",
       "name": "Enviar Dizimos e Ofertas",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        6384,
-        3328
-      ],
+      "position": [6384, 3328],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -596,14 +337,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏"
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏" }
           ]
         },
         "options": {}
@@ -611,17 +346,9 @@
       "id": "6dfbe46f-1dff-4732-b7e0-dfde3ce81ef7",
       "name": "Enviar Gabinete Pastoral Novo",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        6384,
-        3456
-      ],
+      "position": [6384, 3456],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -632,14 +359,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "🎭 *Auto de Páscoa*\n\n📅 Apresentações:\nSábado, 11 de abril | 20h\nDomingo, 12 de abril | 19h\n\n🎟 Ingressos GRATUITOS\n🔗 Sábado: https://www.sympla.com.br/evento/auto-de-pascoa-yeshua-sabado/3318612#compartilhar-evento?share_id=copiarlink\n🔗 Domingo: https://www.sympla.com.br/evento/auto-de-pascoa-yeshua-domingo/3318639?share_id=copiarlink\n\n⚠ Trazer 1kg de alimento não perecível.\nOs alimentos serão destinados às famílias assistidas do Sol Nascente ❤️\n\nClique no link e faça a sua inscrição.\n🔗 https://tinyurl.com/27z8av63\n\nDigite 3 para voltar aos eventos."
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "🎭 *Auto de Páscoa*\n\n📅 Apresentações:\nSábado, 11 de abril | 20h\nDomingo, 12 de abril | 19h\n\n🎟 Ingressos GRATUITOS\n🔗 Sábado: https://www.sympla.com.br/evento/auto-de-pascoa-yeshua-sabado/3318612#compartilhar-evento?share_id=copiarlink\n🔗 Domingo: https://www.sympla.com.br/evento/auto-de-pascoa-yeshua-domingo/3318639?share_id=copiarlink\n\n⚠ Trazer 1kg de alimento não perecível.\nOs alimentos serão destinados às famílias assistidas do Sol Nascente ❤️\n\nClique no link e faça a sua inscrição.\n🔗 https://tinyurl.com/27z8av63\n\nDigite 3 para voltar aos eventos." }
           ]
         },
         "options": {}
@@ -647,17 +368,9 @@
       "id": "node-pascoa",
       "name": "Enviar Auto de Pascoa",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        6112,
-        3312
-      ],
+      "position": [6112, 3312],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -668,14 +381,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "👨‍👩‍👧 *IV Festa da Família*\n\n📅 1º de maio | A partir das 8h\n\n🎟 *Ingressos e Valores:*\n👶 *0 a 5 anos* — Grátis\n🧒 *6 a 10 anos* — R$ 50,00\n🧑 *A partir de 11 anos* — R$ 100,00\n\nClique no link e faça a sua inscrição.\n🔗 https://tinyurl.com/27z8av63\n\nDigite 3 para voltar aos eventos."
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "👨‍👩‍👧 *IV Festa da Família*\n\n📅 1º de maio | A partir das 8h\n\n🎟 *Ingressos e Valores:*\n👶 *0 a 5 anos* — Grátis\n🧒 *6 a 10 anos* — R$ 50,00\n🧑 *A partir de 11 anos* — R$ 100,00\n\nClique no link e faça a sua inscrição.\n🔗 https://tinyurl.com/27z8av63\n\nDigite 3 para voltar aos eventos." }
           ]
         },
         "options": {}
@@ -683,17 +390,9 @@
       "id": "node-familia",
       "name": "Enviar Dia da Familia",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        6112,
-        3456
-      ],
+      "position": [6112, 3456],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
     {
       "parameters": {
@@ -704,14 +403,8 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "text",
-              "value": "🌽 *Festa do Milho*\n\nMais informações em breve.\n\nClique no link e faça a sua inscrição.\n🔗 https://tinyurl.com/27z8av63\n\nDigite 3 para voltar aos eventos."
-            }
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "🌽 *Festa do Milho*\n\nMais informações em breve.\n\nClique no link e faça a sua inscrição.\n🔗 https://tinyurl.com/27z8av63\n\nDigite 3 para voltar aos eventos." }
           ]
         },
         "options": {}
@@ -719,192 +412,37 @@
       "id": "node-milho",
       "name": "Enviar Festa do Milho",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        6112,
-        3776
-      ],
+      "position": [6112, 3776],
       "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://evolution-api:8080/message/sendMedia/{{ $json.instancia }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "number",
-              "value": "={{ $json.telefone }}"
-            },
-            {
-              "name": "mediatype",
-              "value": "image"
-            },
-            {
-              "name": "mimetype",
-              "value": "image/jpeg"
-            },
-            {
-              "name": "media",
-              "value": "https://raw.githubusercontent.com/rafaelbrenner/gracapaz/gracapaz/assets/logo.jpeg"
-            },
-            {
-              "name": "caption",
-              "value": ""
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "node-logo",
-      "name": "Enviar Logo",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        7680,
-        4240
-      ],
-      "typeVersion": 4.2,
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "1NHflsPDaOAzMRlR",
-          "name": "Header Auth account"
-        }
-      }
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     }
   ],
   "pinData": {},
   "connections": {
-    "Roteador de Opcoes": {
-      "main": [
-        [
-          {
-            "node": "Enviar Horarios",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Pedido de Oracao",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Info Celulas",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Dizimos e Ofertas",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Gabinete Pastoral Novo",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Gabinete Pastoral",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Auto de Pascoa",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Dia da Familia",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Festa do Milho",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar Logo",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook Evolution API": {
-      "main": [
-        [
-          {
-            "node": "Somente Mensagens Recebidas",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extrair Dados da Mensagem": {
-      "main": [
-        [
-          {
-            "node": "Roteador de Opcoes",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Somente Mensagens Recebidas", "type": "main", "index": 0 }]]
     },
     "Somente Mensagens Recebidas": {
       "main": [
-        [
-          {
-            "node": "Extrair Dados da Mensagem",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Responder 200 OK",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Extrair Dados da Mensagem", "type": "main", "index": 0 }],
+        [{ "node": "Responder 200 OK", "type": "main", "index": 0 }]
       ]
     },
-    "Enviar Logo": {
+    "Extrair Dados da Mensagem": {
+      "main": [[{ "node": "Roteador de Opcoes", "type": "main", "index": 0 }]]
+    },
+    "Roteador de Opcoes": {
       "main": [
-        [
-          {
-            "node": "Enviar Menu de Boas-vindas",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Enviar Horarios", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Pedido de Oracao", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Info Celulas", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Dizimos e Ofertas", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Gabinete Pastoral Novo", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Gabinete Pastoral", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Auto de Pascoa", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Dia da Familia", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Festa do Milho", "type": "main", "index": 0 }],
+        [{ "node": "Enviar Menu de Boas-vindas", "type": "main", "index": 0 }]
       ]
     }
   },
