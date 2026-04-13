@@ -114,7 +114,7 @@ Serviços e portas:
 | Campo | Valor |
 |---|---|
 | **Nome da instância** | `gracapaz` |
-| **Número WhatsApp** | `5561992559487` |
+| **Número WhatsApp** | (ver arquivo `.env`) |
 | **Token da instância** | `SUA_INSTANCE_TOKEN_AQUI` |
 | **Channel** | Baileys |
 

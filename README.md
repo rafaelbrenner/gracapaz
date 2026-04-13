@@ -25,11 +25,11 @@ WhatsApp ──► Evolution API ──► N8N Webhooks ──► Workflows ─�
 **Containers:**
 | Serviço        | Porta  | URL                              |
 |----------------|--------|----------------------------------|
-| Evolution API  | 8080   | http://204.168.230.157:8080      |
-| N8N            | 5678   | http://204.168.230.157:5678      |
+| Evolution API  | 8080   | http://SEU_IP:8080      |
+| N8N            | 5678   | http://SEU_IP:5678      |
 | PostgreSQL     | 5432   | interno                          |
-| Portainer      | 9000   | http://204.168.230.157:9000      |
-| Nginx (form)   | 3001   | http://204.168.230.157:3001      |
+| Portainer      | 9000   | http://SEU_IP:9000      |
+| Nginx (form)   | 3001   | http://SEU_IP:3001      |
 
 ---
 
@@ -95,7 +95,7 @@ CREATE TABLE gp_membros (
     codigo           INTEGER UNIQUE NOT NULL,
     nome             TEXT NOT NULL,
     celular          TEXT,
-    celular_whatsapp TEXT,   -- formato: 556192559487
+    celular_whatsapp TEXT,   -- formato: 5561XXXXXXXXX
     email            TEXT,
     sexo             TEXT,
     arrolamento      TEXT,
@@ -168,7 +168,7 @@ API interna usada pelo formulário de escala para autocomplete. Retorna até 10 
 **Exemplo:**
 ```
 GET /webhook/buscar-membro?q=rafael
-→ [{"nome":"Rafael Brenner","celular_whatsapp":"556192559487"},...]
+→ [{"nome":"João Silva","celular_whatsapp":"5561XXXXXXXXX"},...]
 ```
 
 ---
@@ -250,7 +250,7 @@ _Igreja Batista Graça e Paz_
 
 ## Formulário de Escala
 
-**URL:** http://204.168.230.157:3001
+**URL:** http://SEU_IP:3001
 **Arquivo:** `form-escala.html`
 
 Formulário HTML servido via nginx para registrar membros na escala.
@@ -269,8 +269,8 @@ Formulário HTML servido via nginx para registrar membros na escala.
 
 | Campo             | Valor           |
 |-------------------|-----------------|
-| Nome da instância | `gracapaz`      |
-| Número WhatsApp   | `5561920039423` |
+| Nome da instância | `gracapaz`           |
+| Número WhatsApp   | (ver arquivo `.env`) |
 
 ### Webhooks configurados
 
@@ -312,7 +312,7 @@ volumes:
 
 A forma mais confiável é importar pela UI do N8N:
 
-1. Acesse http://204.168.230.157:5678
+1. Acesse http://SEU_IP:5678
 2. Menu → **Workflows** → **Import from file**
 3. Selecione o arquivo `.json` desejado
 4. Após importar, configure as credenciais (PostgreSQL e API Key da Evolution)
