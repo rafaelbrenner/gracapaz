@@ -46,30 +46,10 @@
       "parameters": {
         "assignments": {
           "assignments": [
-            {
-              "id": "a1",
-              "name": "telefone",
-              "type": "string",
-              "value": "={{ $json.body.data.key.remoteJid }}"
-            },
-            {
-              "id": "a2",
-              "name": "nome",
-              "type": "string",
-              "value": "={{ $json.body.data.pushName || 'Visitante' }}"
-            },
-            {
-              "id": "a3",
-              "name": "mensagem",
-              "type": "string",
-              "value": "={{ ($json.body.data.message.conversation ?? $json.body.data.message.extendedTextMessage?.text ?? '').trim().toLowerCase() }}"
-            },
-            {
-              "id": "a4",
-              "name": "instancia",
-              "type": "string",
-              "value": "={{ $json.body.instance }}"
-            }
+            { "id": "a1", "name": "telefone", "type": "string", "value": "={{ $json.body.data.key.remoteJid }}" },
+            { "id": "a2", "name": "nome", "type": "string", "value": "={{ $json.body.data.pushName || 'Visitante' }}" },
+            { "id": "a3", "name": "mensagem", "type": "string", "value": "={{ ($json.body.data.message.conversation ?? $json.body.data.message.extendedTextMessage?.text ?? '').trim().toLowerCase() }}" },
+            { "id": "a4", "name": "instancia", "type": "string", "value": "={{ $json.body.instance }}" }
           ]
         },
         "options": {}
@@ -79,6 +59,132 @@
       "type": "n8n-nodes-base.set",
       "position": [7216, 3584],
       "typeVersion": 3.3
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COALESCE((SELECT estado FROM bot_estados WHERE telefone = $1 AND atualizado_em > NOW() - INTERVAL '24 hours' LIMIT 1), '') as estado",
+        "additionalFields": {
+          "queryParams": "={{ JSON.stringify([$json.telefone]) }}"
+        }
+      },
+      "id": "node-consultar-estado",
+      "name": "Consultar Estado",
+      "type": "n8n-nodes-base.postgres",
+      "position": [7440, 3584],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CRED_ID",
+          "name": "Postgres Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": { "type": "string", "operation": "notEquals" },
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-tem-estado",
+      "name": "Tem Estado Ativo?",
+      "type": "n8n-nodes-base.if",
+      "position": [7680, 3584],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": { "type": "string", "operation": "equals" },
+              "leftValue": "={{ $('Extrair Dados da Mensagem').item.json.mensagem }}",
+              "rightValue": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-quer-cancelar",
+      "name": "Quer Cancelar (0)?",
+      "type": "n8n-nodes-base.if",
+      "position": [7904, 3440],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM bot_estados WHERE telefone = $1",
+        "additionalFields": {
+          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone]) }}"
+        }
+      },
+      "id": "node-limpar-estado-cancelar",
+      "name": "Limpar Estado (Cancelar)",
+      "type": "n8n-nodes-base.postgres",
+      "position": [8128, 3296],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CRED_ID",
+          "name": "Postgres Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $('Extrair Dados da Mensagem').item.json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $('Extrair Dados da Mensagem').item.json.telefone }}" },
+            { "name": "text", "value": "=✅ Mensagem recebida! Nossa equipe entrará em contato em breve. 🙏\n\nSe precisar de mais alguma coisa, *digite 0* para voltar ao menu." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-confirmar-recebimento",
+      "name": "Confirmar Recebimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [8352, 3552],
+      "typeVersion": 4.2,
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM bot_estados WHERE telefone = $1",
+        "additionalFields": {
+          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone]) }}"
+        }
+      },
+      "id": "node-limpar-estado-dialogo",
+      "name": "Limpar Estado (Pós-Diálogo)",
+      "type": "n8n-nodes-base.postgres",
+      "position": [8576, 3552],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CRED_ID",
+          "name": "Postgres Bot"
+        }
+      }
     },
     {
       "parameters": {
@@ -181,7 +287,7 @@
       "id": "c72b66be-47ca-42d7-b93b-f7bc342e2127",
       "name": "Roteador de Opcoes",
       "type": "n8n-nodes-base.switch",
-      "position": [7440, 3584],
+      "position": [7904, 3584],
       "typeVersion": 3
     },
     {
@@ -193,7 +299,7 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "number", "value": "={{ $('Extrair Dados da Mensagem').item.json.telefone }}" },
+            { "name": "number", "value": "={{ $('Extrair Dados da Mensagem').item.json.nome != null ? $('Extrair Dados da Mensagem').item.json.telefone : $json.telefone }}" },
             { "name": "text", "value": "=Olá, {{ $('Extrair Dados da Mensagem').item.json.nome }}! 👋\n\nSeja bem-vindo(a) à *Igreja Batista Graça e Paz*! 🙏\n\nComo posso te ajudar? Digite o *número* de uma das opções:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n💚 *4.* Dízimos e Ofertas\n🗓 *5.* Gabinete Pastoral\n💬 *6.* Falar com nossa equipe" }
           ]
         },
@@ -202,7 +308,7 @@
       "id": "2ac56ed9-d1da-4913-a157-b715eceaee95",
       "name": "Enviar Menu de Boas-vindas",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [7872, 4240],
+      "position": [8352, 4240],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -224,7 +330,7 @@
       "id": "e2a67c91-798b-4008-828a-4eedd40383e0",
       "name": "Enviar Horarios",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [7872, 3328],
+      "position": [8352, 3328],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -246,7 +352,7 @@
       "id": "25d407f5-9277-4d01-ae3c-726056ce4a59",
       "name": "Enviar Pedido de Oracao",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [7888, 3520],
+      "position": [8352, 3456],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -268,7 +374,7 @@
       "id": "282b4fdc-bfcd-406b-ba4e-78138021e3b9",
       "name": "Enviar Info Celulas",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [7872, 3712],
+      "position": [8352, 3584],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -282,7 +388,49 @@
         "bodyParameters": {
           "parameters": [
             { "name": "number", "value": "={{ $json.telefone }}" },
-            { "name": "text", "value": "💬 *6. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏" }
+            { "name": "text", "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏\n\n_(Ou *digite 0* para voltar ao menu)_" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6dfbe46f-1dff-4732-b7e0-dfde3ce81ef7",
+      "name": "Enviar Gabinete Pastoral Novo",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [8352, 3712],
+      "typeVersion": 4.2,
+      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bot_estados (telefone, estado, nome, atualizado_em) VALUES ($1, $2, $3, NOW()) ON CONFLICT (telefone) DO UPDATE SET estado = $2, nome = $3, atualizado_em = NOW()",
+        "additionalFields": {
+          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone, 'aguardando_pastoral', $('Extrair Dados da Mensagem').item.json.nome]) }}"
+        }
+      },
+      "id": "node-salvar-estado-pastoral",
+      "name": "Salvar Estado Pastoral",
+      "type": "n8n-nodes-base.postgres",
+      "position": [8576, 3712],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CRED_ID",
+          "name": "Postgres Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "number", "value": "={{ $json.telefone }}" },
+            { "name": "text", "value": "💬 *6. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏\n\n_(Ou *digite 0* para voltar ao menu)_" }
           ]
         },
         "options": {}
@@ -290,9 +438,29 @@
       "id": "cc739299-d490-446e-9958-f0bbdc184727",
       "name": "Enviar Gabinete Pastoral",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [7872, 4032],
+      "position": [8352, 3840],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bot_estados (telefone, estado, nome, atualizado_em) VALUES ($1, $2, $3, NOW()) ON CONFLICT (telefone) DO UPDATE SET estado = $2, nome = $3, atualizado_em = NOW()",
+        "additionalFields": {
+          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone, 'aguardando_equipe', $('Extrair Dados da Mensagem').item.json.nome]) }}"
+        }
+      },
+      "id": "node-salvar-estado-equipe",
+      "name": "Salvar Estado Equipe",
+      "type": "n8n-nodes-base.postgres",
+      "position": [8576, 3840],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": {
+          "id": "POSTGRES_CRED_ID",
+          "name": "Postgres Bot"
+        }
+      }
     },
     {
       "parameters": {
@@ -324,29 +492,7 @@
       "id": "81741910-af25-4c3b-8f2a-8f9117397d50",
       "name": "Enviar Dizimos e Ofertas",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [6384, 3328],
-      "typeVersion": 4.2,
-      "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://evolution-api:8080/message/sendText/{{ $json.instancia }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            { "name": "number", "value": "={{ $json.telefone }}" },
-            { "name": "text", "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏" }
-          ]
-        },
-        "options": {}
-      },
-      "id": "6dfbe46f-1dff-4732-b7e0-dfde3ce81ef7",
-      "name": "Enviar Gabinete Pastoral Novo",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [6384, 3456],
+      "position": [8352, 3968],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -368,7 +514,7 @@
       "id": "node-pascoa",
       "name": "Enviar Auto de Pascoa",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [6112, 3312],
+      "position": [8352, 4096],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -390,7 +536,7 @@
       "id": "node-familia",
       "name": "Enviar Dia da Familia",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [6112, 3456],
+      "position": [8352, 4352],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     },
@@ -412,7 +558,7 @@
       "id": "node-milho",
       "name": "Enviar Festa do Milho",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [6112, 3776],
+      "position": [8352, 4480],
       "typeVersion": 4.2,
       "credentials": { "httpHeaderAuth": { "id": "1NHflsPDaOAzMRlR", "name": "Header Auth account" } }
     }
@@ -429,7 +575,28 @@
       ]
     },
     "Extrair Dados da Mensagem": {
-      "main": [[{ "node": "Roteador de Opcoes", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Consultar Estado", "type": "main", "index": 0 }]]
+    },
+    "Consultar Estado": {
+      "main": [[{ "node": "Tem Estado Ativo?", "type": "main", "index": 0 }]]
+    },
+    "Tem Estado Ativo?": {
+      "main": [
+        [{ "node": "Quer Cancelar (0)?", "type": "main", "index": 0 }],
+        [{ "node": "Roteador de Opcoes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Quer Cancelar (0)?": {
+      "main": [
+        [{ "node": "Limpar Estado (Cancelar)", "type": "main", "index": 0 }],
+        [{ "node": "Confirmar Recebimento", "type": "main", "index": 0 }]
+      ]
+    },
+    "Limpar Estado (Cancelar)": {
+      "main": [[{ "node": "Enviar Menu de Boas-vindas", "type": "main", "index": 0 }]]
+    },
+    "Confirmar Recebimento": {
+      "main": [[{ "node": "Limpar Estado (Pós-Diálogo)", "type": "main", "index": 0 }]]
     },
     "Roteador de Opcoes": {
       "main": [
@@ -444,6 +611,12 @@
         [{ "node": "Enviar Festa do Milho", "type": "main", "index": 0 }],
         [{ "node": "Enviar Menu de Boas-vindas", "type": "main", "index": 0 }]
       ]
+    },
+    "Enviar Gabinete Pastoral Novo": {
+      "main": [[{ "node": "Salvar Estado Pastoral", "type": "main", "index": 0 }]]
+    },
+    "Enviar Gabinete Pastoral": {
+      "main": [[{ "node": "Salvar Estado Equipe", "type": "main", "index": 0 }]]
     }
   },
   "active": true,
