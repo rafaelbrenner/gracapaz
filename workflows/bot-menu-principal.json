@@ -63,10 +63,8 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT COALESCE((SELECT estado FROM bot_estados WHERE telefone = $1 AND atualizado_em > NOW() - INTERVAL '24 hours' LIMIT 1), '') as estado",
-        "additionalFields": {
-          "queryParams": "={{ JSON.stringify([$json.telefone]) }}"
-        }
+        "query": "=SELECT COALESCE((SELECT estado FROM bot_estados WHERE telefone = '{{ $json.telefone }}' AND atualizado_em > NOW() - INTERVAL '24 hours' LIMIT 1), '') as estado",
+        "options": {}
       },
       "id": "node-consultar-estado",
       "name": "Consultar Estado",
@@ -105,7 +103,7 @@
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "options": { "caseSensitive": false, "typeValidation": "loose" },
           "combinator": "and",
           "conditions": [
             {
@@ -127,10 +125,8 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM bot_estados WHERE telefone = $1",
-        "additionalFields": {
-          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone]) }}"
-        }
+        "query": "=DELETE FROM bot_estados WHERE telefone = '{{ $('Extrair Dados da Mensagem').item.json.telefone }}'",
+        "options": {}
       },
       "id": "node-limpar-estado-cancelar",
       "name": "Limpar Estado (Cancelar)",
@@ -146,6 +142,28 @@
     },
     {
       "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": { "type": "string", "operation": "notEquals" },
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "em_atendimento"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-eh-primeira-msg",
+      "name": "É primeira mensagem?",
+      "type": "n8n-nodes-base.if",
+      "position": [8128, 3552],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "=http://evolution-api:8080/message/sendText/{{ $('Extrair Dados da Mensagem').item.json.instancia }}",
         "authentication": "genericCredentialType",
@@ -154,7 +172,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "number", "value": "={{ $('Extrair Dados da Mensagem').item.json.telefone }}" },
-            { "name": "text", "value": "=✅ Mensagem recebida! Nossa equipe entrará em contato em breve. 🙏\n\nSe precisar de mais alguma coisa, *digite 0* para voltar ao menu." }
+            { "name": "text", "value": "=✅ Mensagem recebida! Nossa secretária responderá assim que possível. 🙏\n\nSe precisar do menu novamente, *digite 0*." }
           ]
         },
         "options": {}
@@ -169,13 +187,11 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM bot_estados WHERE telefone = $1",
-        "additionalFields": {
-          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone]) }}"
-        }
+        "query": "=UPDATE bot_estados SET estado = 'em_atendimento', atualizado_em = NOW() WHERE telefone = '{{ $('Extrair Dados da Mensagem').item.json.telefone }}'",
+        "options": {}
       },
       "id": "node-limpar-estado-dialogo",
-      "name": "Limpar Estado (Pós-Diálogo)",
+      "name": "Atualizar para em_atendimento",
       "type": "n8n-nodes-base.postgres",
       "position": [8576, 3552],
       "typeVersion": 2.5,
@@ -275,7 +291,7 @@
               "conditions": {
                 "options": { "version": 1, "leftValue": "", "caseSensitive": false, "typeValidation": "loose" },
                 "combinator": "and",
-                "conditions": [{ "id": "1db129c9-74cd-4d3f-82c0-4345d825b5ce", "operator": { "type": "string", "operation": "exists", "singleValue": true }, "leftValue": "={{ $json.mensagem }}", "rightValue": "" }]
+                "conditions": [{ "id": "1db129c9-74cd-4d3f-82c0-4345d825b5ce", "operator": { "type": "string", "operation": "exists", "singleValue": true }, "leftValue": "={{ $json.telefone }}", "rightValue": "" }]
               },
               "renameOutput": true,
               "outputKey": "menu"
@@ -300,7 +316,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "number", "value": "={{ $('Extrair Dados da Mensagem').item.json.nome != null ? $('Extrair Dados da Mensagem').item.json.telefone : $json.telefone }}" },
-            { "name": "text", "value": "=Olá, {{ $('Extrair Dados da Mensagem').item.json.nome }}! 👋\n\nSeja bem-vindo(a) à *Igreja Batista Graça e Paz*! 🙏\n\nComo posso te ajudar? Digite o *número* de uma das opções:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n💚 *4.* Dízimos e Ofertas\n🗓 *5.* Gabinete Pastoral\n💬 *6.* Falar com nossa equipe" }
+            { "name": "text", "value": "=Olá, {{ $('Extrair Dados da Mensagem').item.json.nome }}! 👋\n\nSeja bem-vindo(a) à *Igreja Batista Graça e Paz*! 🙏\n\nComo posso te ajudar? Digite o *número* de uma das opções:\n\n⛪ *1.* Dias e horários dos cultos\n📚 *2.* Cursos, seminários e células\n📅 *3.* Eventos 2026\n💚 *4.* Dízimos e Ofertas\n🗓 *5.* Gabinete Pastoral\n💬 *6.* Falar com a secretaria" }
           ]
         },
         "options": {}
@@ -388,7 +404,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "number", "value": "={{ $json.telefone }}" },
-            { "name": "text", "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa equipe entrará em contato para confirmar o agendamento. 🙏\n\n_(Ou *digite 0* para voltar ao menu)_" }
+            { "name": "text", "value": "🗓 *5. Gabinete Pastoral*\n\nPara agendar um atendimento com o pastor, por favor nos informe:\n\n• Seu nome\n• Seus dias disponíveis\n• Seus horários disponíveis\n\nEx: *Terças e Quintas, das 18h às 20h*\n\nNossa secretária entrará em contato para confirmar o agendamento. 🙏\n\n_(Ou *digite 0* para voltar ao menu)_" }
           ]
         },
         "options": {}
@@ -403,10 +419,8 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO bot_estados (telefone, estado, nome, atualizado_em) VALUES ($1, $2, $3, NOW()) ON CONFLICT (telefone) DO UPDATE SET estado = $2, nome = $3, atualizado_em = NOW()",
-        "additionalFields": {
-          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone, 'aguardando_pastoral', $('Extrair Dados da Mensagem').item.json.nome]) }}"
-        }
+        "query": "=INSERT INTO bot_estados (telefone, estado, nome, atualizado_em) VALUES ('{{ $('Extrair Dados da Mensagem').item.json.telefone }}', 'aguardando_pastoral', '{{ $('Extrair Dados da Mensagem').item.json.nome.replace(/'/g, \"''\") }}', NOW()) ON CONFLICT (telefone) DO UPDATE SET estado = 'aguardando_pastoral', nome = '{{ $('Extrair Dados da Mensagem').item.json.nome.replace(/'/g, \"''\") }}', atualizado_em = NOW()",
+        "options": {}
       },
       "id": "node-salvar-estado-pastoral",
       "name": "Salvar Estado Pastoral",
@@ -430,7 +444,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "number", "value": "={{ $json.telefone }}" },
-            { "name": "text", "value": "💬 *6. Falar com nossa equipe*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa equipe entrará em contato em breve. 🙏\n\n_(Ou *digite 0* para voltar ao menu)_" }
+            { "name": "text", "value": "💬 *6. Falar com a secretaria*\n\nFicamos felizes em te atender! 😊\n\nPor favor, nos envie:\n• Seu nome\n• Sua mensagem ou dúvida\n\nNossa secretária responderá assim que possible. 🙏\n\n_(Ou *digite 0* para voltar ao menu)_" }
           ]
         },
         "options": {}
@@ -445,10 +459,8 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO bot_estados (telefone, estado, nome, atualizado_em) VALUES ($1, $2, $3, NOW()) ON CONFLICT (telefone) DO UPDATE SET estado = $2, nome = $3, atualizado_em = NOW()",
-        "additionalFields": {
-          "queryParams": "={{ JSON.stringify([$('Extrair Dados da Mensagem').item.json.telefone, 'aguardando_equipe', $('Extrair Dados da Mensagem').item.json.nome]) }}"
-        }
+        "query": "=INSERT INTO bot_estados (telefone, estado, nome, atualizado_em) VALUES ('{{ $('Extrair Dados da Mensagem').item.json.telefone }}', 'aguardando_equipe', '{{ $('Extrair Dados da Mensagem').item.json.nome.replace(/'/g, \"''\") }}', NOW()) ON CONFLICT (telefone) DO UPDATE SET estado = 'aguardando_equipe', nome = '{{ $('Extrair Dados da Mensagem').item.json.nome.replace(/'/g, \"''\") }}', atualizado_em = NOW()",
+        "options": {}
       },
       "id": "node-salvar-estado-equipe",
       "name": "Salvar Estado Equipe",
@@ -589,6 +601,11 @@
     "Quer Cancelar (0)?": {
       "main": [
         [{ "node": "Limpar Estado (Cancelar)", "type": "main", "index": 0 }],
+        [{ "node": "É primeira mensagem?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É primeira mensagem?": {
+      "main": [
         [{ "node": "Confirmar Recebimento", "type": "main", "index": 0 }]
       ]
     },
@@ -596,7 +613,7 @@
       "main": [[{ "node": "Enviar Menu de Boas-vindas", "type": "main", "index": 0 }]]
     },
     "Confirmar Recebimento": {
-      "main": [[{ "node": "Limpar Estado (Pós-Diálogo)", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Atualizar para em_atendimento", "type": "main", "index": 0 }]]
     },
     "Roteador de Opcoes": {
       "main": [
