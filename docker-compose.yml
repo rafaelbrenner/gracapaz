@@ -79,7 +79,8 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-      - N8N_SECURE_COOKIE=false   # mudar para true ao configurar HTTPS
+      - N8N_SECURE_COOKIE=true
+      - N8N_TRUST_PROXY=true
       # PostgreSQL para N8N (workflows, execuções e credenciais no banco gerenciado)
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
