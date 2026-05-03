@@ -28,7 +28,7 @@ WhatsApp ──► Evolution API ──► N8N Webhooks ──► Workflows ─�
 | Evolution API  | 8080   | http://SEU_IP:8080      |
 | N8N            | 5678   | http://SEU_IP:5678      |
 | PostgreSQL     | 5432   | interno                          |
-| Portainer      | 9000   | http://SEU_IP:9000      |
+| pgAdmin        | 5050   | http://SEU_IP:5050      |
 | Nginx (form)   | 3001   | http://SEU_IP:3001      |
 
 ---
@@ -74,13 +74,7 @@ CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690
 docker-compose up -d
 ```
 
-### 4. Suba o container do formulário web
-
-```bash
-mkdir -p /opt/gracapaz-form
-cp form-escala.html /opt/gracapaz-form/index.html
-docker run -d --name form-escala --restart unless-stopped -p 3001:80 -v /opt/gracapaz-form:/usr/share/nginx/html:ro nginx:alpine
-```
+O formulário web já está incluso no `docker-compose.yml` como serviço `form-escala` (nginx na porta 3001) — não é necessário nenhum passo adicional.
 
 ---
 
@@ -297,12 +291,14 @@ O gateway de escala (`/webhook/escala-gateway`) recebe as mesmas mensagens via e
 O WhatsApp usa JIDs no formato `@lid` para contatos com privacidade ativada.
 A Evolution API v2.2.3 rejeita esses JIDs por padrão.
 
-O arquivo `patches/main.js` contém o patch aplicado. O `docker-compose.yml` monta automaticamente:
+O arquivo `patches/main.js` contém o patch. O `patches/Dockerfile` aplica o patch na imagem durante o build:
 
-```yaml
-volumes:
-  - ./patches/main.js:/evolution/dist/main.js:ro
+```dockerfile
+FROM atendai/evolution-api:v2.2.3
+COPY main.js /evolution/dist/main.js
 ```
+
+O `docker-compose.yml` faz o build automaticamente — nenhuma configuração extra é necessária.
 
 **O que o patch faz:** na função `whatsappNumber()`, se o JID contém `@lid`, retorna `exists: true` sem chamar `onWhatsApp()`. O Baileys suporta envio nativo para `@lid`.
 
@@ -344,16 +340,15 @@ docker-compose logs -f evolution-api
 docker restart n8n
 
 # Ver escalas pendentes
-docker exec postgres psql -U root -d gracapaz \
+docker exec postgres psql -U root -d evolution \
   -c "SELECT membro_nome, funcao, data_evento, status FROM gp_escala ORDER BY data_evento;"
 
 # Ver membros sincronizados
-docker exec postgres psql -U root -d gracapaz \
+docker exec postgres psql -U root -d evolution \
   -c "SELECT COUNT(*), arrolamento FROM gp_membros GROUP BY arrolamento ORDER BY count DESC;"
 
 # Recriar container do formulário
-docker rm -f form-escala
-docker run -d --name form-escala --restart unless-stopped -p 3001:80 -v /opt/gracapaz-form:/usr/share/nginx/html:ro nginx:alpine
+docker-compose up -d --force-recreate form-escala
 ```
 
 ---
@@ -401,7 +396,14 @@ gracapaz/
 ├── README.md
 ├── form-escala.html                          # Formulário de registro de escala
 ├── patches/
-│   └── main.js                               # Patch LID para Evolution API
+│   ├── Dockerfile                            # Build da Evolution API com patch LID
+│   └── main.js                               # Patch LID (bypass @lid na whatsappNumber())
+├── scripts/
+│   ├── init-eklesia-db.sql                   # Criação das tabelas gp_membros e gp_escala
+│   ├── criar-tabela-bot-estados.sql          # Tabela bot_estados (máquina de estados)
+│   ├── 003_migrate_hora_tipo.sql             # Migration: VARCHAR → TIME em hora_evento
+│   ├── 004_add_fk_escala.sql                 # Migration: FK gp_escala → gp_membros
+│   └── migrate.sh                            # Aplica todas as migrations em ordem
 └── workflows/
     ├── bot-menu-principal.json               # Bot de atendimento WhatsApp
     ├── eklesia-sync-membros.json             # Sincronização de membros do Eklesia

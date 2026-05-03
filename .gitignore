@@ -34,5 +34,6 @@ tmp/
 temp/
 *.tmp
 
-# Scripts utilitários locais (não fazem parte do projeto)
-scripts/
+# Temporários de sessão
+RESUMO_SESSAO.md
+

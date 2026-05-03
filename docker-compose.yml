@@ -18,35 +18,16 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis (para Evolution API)
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    command: >
-      redis-server
-      --port 6379
-      --appendonly yes
-    volumes:
-      - redis_data:/data
-    networks:
-      - whatsapp-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Evolution API (conexão com WhatsApp)
+# Evolution API (conexão com WhatsApp)
+  # Build local aplica o patch LID — versão base fixada no patches/Dockerfile
   evolution-api:
-    image: atendai/evolution-api:latest
+    build: ./patches
     container_name: evolution-api
     ports:
       - "8080:8080"
     volumes:
       - evolution_instances:/evolution/instances
       - evolution_store:/evolution/store
-      - ./patches/main.js:/evolution/dist/main.js:ro
     networks:
       - whatsapp-network
     environment:
@@ -61,12 +42,6 @@ services:
       - DATABASE_SAVE_DATA_INSTANCE=true
       - DATABASE_SAVE_DATA_NEW_MESSAGE=true
       - DATABASE_SAVE_MESSAGE_UPDATE=true
-      
-      # Redis
-      - CACHE_REDIS_ENABLED=true
-      - CACHE_REDIS_URI=redis://redis:6379/6
-      - CACHE_REDIS_PREFIX_KEY=evolution
-      - CACHE_REDIS_SAVE_INSTANCES=false
       
       # Webhooks (para N8N)
       - WEBHOOK_GLOBAL_URL=${N8N_WEBHOOK_URL:-http://localhost:5678}/webhook
@@ -85,12 +60,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
 
-  # N8N (automação)
+  # N8N (automação) — v1 fixado para evitar breaking changes de versão major
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1
     container_name: n8n
     ports:
       - "5678:5678"
@@ -102,7 +75,7 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-      - N8N_SECURE_COOKIE=false
+      - N8N_SECURE_COOKIE=false   # mudar para true ao configurar HTTPS
       # PostgreSQL para N8N (workflows, execuções e credenciais no banco gerenciado)
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -118,19 +91,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-
-  # Portainer (gerenciamento de containers)
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    ports:
-      - "9000:9000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    networks:
-      - whatsapp-network
-    restart: unless-stopped
 
   # pgAdmin (interface web para gerenciar o PostgreSQL)
   pgadmin:
@@ -150,6 +110,18 @@ services:
       postgres:
         condition: service_healthy
 
+  # Formulário de escala (HTML estático via nginx)
+  form-escala:
+    image: nginx:alpine
+    container_name: form-escala
+    ports:
+      - "3001:80"
+    volumes:
+      - ./form-escala.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - whatsapp-network
+    restart: unless-stopped
+
   # Cloudflare Tunnel (opcional - descomente se for usar)
   # cloudflared:
   #   image: cloudflare/cloudflared:latest
@@ -168,11 +140,9 @@ networks:
 
 volumes:
   postgres_data:
-  redis_data:
   evolution_instances:
   evolution_store:
   n8n_data:
-  portainer_data:
   pgadmin_data:
 
     
