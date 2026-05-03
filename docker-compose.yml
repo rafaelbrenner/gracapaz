@@ -52,6 +52,10 @@ services:
       - QRCODE_LIMIT=30
       - QRCODE_COLOR=#000000
       
+      # Cache (Redis desabilitado)
+      - CACHE_REDIS_ENABLED=false
+      - CACHE_LOCAL_ENABLED=true
+
       # Outras configs
       - CONFIG_SESSION_PHONE_CLIENT=Evolution API
       - CONFIG_SESSION_PHONE_NAME=Chrome
