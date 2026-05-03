@@ -16,6 +16,10 @@ label{display:block;font-size:.85rem;font-weight:600;color:#4a5568;margin-bottom
 .req{color:#e53e3e}
 input,select{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.95rem;color:#2d3748;outline:none;transition:border-color .2s}
 input:focus,select:focus{border-color:#4299e1}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:42px}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#718096;padding:0;margin:0;width:auto;font-size:1.1rem;line-height:1}
+.pw-toggle:hover{color:#2b6cb0}
 .acl{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.1);display:none}
 .aci{padding:10px 14px;cursor:pointer;font-size:.9rem;color:#2d3748}
 .aci:hover{background:#ebf8ff;color:#2b6cb0}
@@ -49,7 +53,10 @@ button:disabled{background:#a0aec0;cursor:not-allowed}
     </div>
     <div class="field">
       <label>Senha</label>
-      <input type="password" id="l-senha" placeholder="Sua senha" required>
+      <div class="pw-wrap">
+        <input type="password" id="l-senha" placeholder="Sua senha" required>
+        <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Mostrar/ocultar senha">&#128065;</button>
+      </div>
     </div>
     <p class="err" id="login-err">Usuário ou senha incorretos.</p>
     <button type="submit" id="login-btn">Entrar</button>
@@ -174,6 +181,14 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
   btn.disabled = false;
   btn.textContent = 'Entrar';
+});
+
+// --- Toggle senha ---
+document.getElementById('pw-toggle').addEventListener('click', function() {
+  const input = document.getElementById('l-senha');
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  this.innerHTML = show ? '&#128064;' : '&#128065;';
 });
 
 // --- Logout ---
