@@ -25,10 +25,43 @@ button:disabled{background:#a0aec0;cursor:not-allowed}
 .ok{display:none;text-align:center;padding:24px}
 .ok .ic{font-size:3rem}
 .ok p{color:#2d3748;margin-top:12px}
+.err{color:#e53e3e;font-size:.85rem;margin-top:8px;display:none;text-align:center}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0}
+.topbar span{font-size:.85rem;color:#4a5568}
+.topbar strong{color:#2b6cb0}
+.btn-sair{width:auto;padding:6px 16px;font-size:.8rem;background:#e53e3e;margin-top:0}
+.btn-sair:hover{background:#c53030}
+.btn-novo{width:auto;padding:10px 20px;margin-top:16px}
 </style>
 </head>
 <body>
-<div class="card">
+
+<!-- Tela de Login -->
+<div class="card" id="login-card">
+  <div class="header">
+    <h1>⛪ Graça e Paz</h1>
+    <p>Acesso restrito — Líderes e Secretaria</p>
+  </div>
+  <form id="login-form" autocomplete="off">
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="l-usuario" placeholder="Seu usuário" required>
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="l-senha" placeholder="Sua senha" required>
+    </div>
+    <p class="err" id="login-err">Usuário ou senha incorretos.</p>
+    <button type="submit" id="login-btn">Entrar</button>
+  </form>
+</div>
+
+<!-- Formulário de Escala -->
+<div class="card" id="form-card" style="display:none">
+  <div class="topbar">
+    <span>Olá, <strong id="user-nome"></strong></span>
+    <button class="btn-sair" id="btn-sair">Sair</button>
+  </div>
   <div class="header">
     <h1>⛪ Escala de Culto</h1>
     <p>Igreja Batista Graça e Paz</p>
@@ -69,17 +102,94 @@ button:disabled{background:#a0aec0;cursor:not-allowed}
     </div>
     <div class="field">
       <label>Registrado por</label>
-      <input type="text" id="rg" placeholder="Seu nome (opcional)">
+      <input type="text" id="rg" readonly style="background:#f7fafc;color:#718096">
     </div>
     <button type="submit" id="btn">Registrar Escala</button>
   </form>
   <div class="ok" id="ok">
     <div class="ic">✅</div>
     <p><strong>Escala registrada!</strong><br>O membro receberá notificação pelo WhatsApp em breve.</p>
+    <button class="btn-novo" id="btn-novo">Registrar outro</button>
   </div>
 </div>
+
 <script>
-const API = 'http://SEU_IP:5678/webhook';
+const API = 'https://n8n.gracaepazdf.org.br/webhook';
+const SESSION_KEY = 'gp_secretario';
+
+// --- Sessão ---
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+
+function iniciarSessao(dados) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(dados));
+  mostrarFormulario(dados);
+}
+
+function encerrarSessao() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+function mostrarFormulario(dados) {
+  document.getElementById('login-card').style.display = 'none';
+  document.getElementById('form-card').style.display = 'block';
+  document.getElementById('user-nome').textContent = dados.nome;
+  document.getElementById('rg').value = dados.nome;
+}
+
+// Verificar sessão ao carregar
+const sessao = getSession();
+if (sessao) mostrarFormulario(sessao);
+
+// --- Login ---
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  try {
+    const res = await fetch(API + '/auth-escala', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usuario: document.getElementById('l-usuario').value.trim(),
+        senha: document.getElementById('l-senha').value
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      iniciarSessao({ nome: data.nome, usuario: data.usuario, departamento: data.departamento });
+    } else {
+      err.style.display = 'block';
+    }
+  } catch {
+    err.textContent = 'Erro de conexão. Tente novamente.';
+    err.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+});
+
+// --- Logout ---
+document.getElementById('btn-sair').addEventListener('click', encerrarSessao);
+
+// --- Registrar outro ---
+document.getElementById('btn-novo').addEventListener('click', function() {
+  document.getElementById('f').reset();
+  document.getElementById('rg').value = getSession()?.nome || '';
+  document.getElementById('f').style.display = 'block';
+  document.getElementById('ok').style.display = 'none';
+  document.getElementById('btn').disabled = false;
+  document.getElementById('btn').textContent = 'Registrar Escala';
+});
+
+// --- Autocomplete ---
 let sel = null, tmr;
 const ni = document.getElementById('ni');
 const nv = document.getElementById('nv');
@@ -99,7 +209,7 @@ async function buscar(q) {
     const r = await fetch(API + '/buscar-membro?q=' + encodeURIComponent(q));
     const d = await r.json();
     renderList(d);
-  } catch(e) { acl.style.display = 'none'; }
+  } catch { acl.style.display = 'none'; }
 }
 
 function renderList(items) {
@@ -120,6 +230,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.field')) acl.style.display = 'none';
 });
 
+// --- Submit escala ---
 document.getElementById('f').addEventListener('submit', async function(e) {
   e.preventDefault();
   if (!nv.value) { alert('Selecione um membro da lista.'); ni.focus(); return; }
@@ -142,7 +253,7 @@ document.getElementById('f').addEventListener('submit', async function(e) {
     });
     document.getElementById('f').style.display = 'none';
     document.getElementById('ok').style.display = 'block';
-  } catch(err) {
+  } catch {
     btn.disabled = false;
     btn.textContent = 'Registrar Escala';
     alert('Erro ao registrar. Tente novamente.');
