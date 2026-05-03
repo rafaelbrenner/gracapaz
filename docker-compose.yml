@@ -122,6 +122,22 @@ services:
       - whatsapp-network
     restart: unless-stopped
 
+  # Nginx Proxy Manager — reverse proxy com SSL automático (Let's Encrypt)
+  # Admin UI: http://SEU_IP:81  (primeiro acesso: admin@example.com / changeme)
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - whatsapp-network
+    restart: unless-stopped
+
   # Cloudflare Tunnel (opcional - descomente se for usar)
   # cloudflared:
   #   image: cloudflare/cloudflared:latest
@@ -140,6 +156,8 @@ networks:
 
 volumes:
   postgres_data:
+  npm_data:
+  npm_letsencrypt:
   evolution_instances:
   evolution_store:
   n8n_data:
