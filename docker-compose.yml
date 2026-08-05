@@ -18,54 +18,7 @@ services:
       timeout: 5s
       retries: 5
 
-# Evolution API (conexão com WhatsApp)
-  # Build local aplica o patch LID — versão base fixada no patches/Dockerfile
-  evolution-api:
-    build: ./patches
-    container_name: evolution-api
-    ports:
-      - "8080:8080"
-    volumes:
-      - evolution_instances:/evolution/instances
-      - evolution_store:/evolution/store
-    networks:
-      - whatsapp-network
-    environment:
-      # Configurações básicas
-      - SERVER_URL=${SERVER_URL:-http://localhost:8080}
-      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
-
-      # Database
-      - DATABASE_ENABLED=true
-      - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-evolution}?schema=public
-      - DATABASE_SAVE_DATA_INSTANCE=true
-      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-      - DATABASE_SAVE_MESSAGE_UPDATE=true
-      
-      # Webhooks (para N8N)
-      - WEBHOOK_GLOBAL_URL=${N8N_WEBHOOK_URL:-http://localhost:5678}/webhook
-      - WEBHOOK_GLOBAL_ENABLED=false
-      - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
-      
-      # QR Code
-      - QRCODE_LIMIT=30
-      - QRCODE_COLOR=#000000
-      
-      # Cache (Redis desabilitado)
-      - CACHE_REDIS_ENABLED=false
-      - CACHE_LOCAL_ENABLED=true
-
-      # Outras configs
-      - CONFIG_SESSION_PHONE_CLIENT=Evolution API
-      - CONFIG_SESSION_PHONE_NAME=Chrome
-      - CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # N8N (automação) — v1 fixado para evitar breaking changes de versão major
+# N8N (automação) — v1 fixado para evitar breaking changes de versão major
   n8n:
     image: n8nio/n8n:1
     container_name: n8n
@@ -76,6 +29,10 @@ services:
       - N8N_PROTOCOL=http
       - N8N_HOST=0.0.0.0
       - GENERIC_TIMEZONE=America/Sao_Paulo
+      # WhatsApp Cloud API — expostos para uso via $env nas expressões dos nós HTTP
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - GRAPH_API_VERSION=${GRAPH_API_VERSION:-v21.0}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
@@ -158,7 +115,6 @@ services:
   #     - whatsapp-network
   #   restart: unless-stopped
   #   depends_on:
-  #     - evolution-api
   #     - n8n
 
 networks:
@@ -169,8 +125,6 @@ volumes:
   postgres_data:
   npm_data:
   npm_letsencrypt:
-  evolution_instances:
-  evolution_store:
   n8n_data:
   pgadmin_data:
 

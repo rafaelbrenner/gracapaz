@@ -1,6 +1,9 @@
 # Bot WhatsApp — Igreja Batista Graça e Paz
 
-Sistema de automação para WhatsApp com integração ao sistema de gestão Eklesia, usando Evolution API, N8N e PostgreSQL.
+Sistema de automação para WhatsApp com integração ao sistema de gestão Eklesia, usando o **WhatsApp Cloud API (Meta — canal oficial)**, N8N e PostgreSQL.
+
+> **Migração concluída:** o projeto deixou de usar a Evolution API (Baileys, não-oficial) e
+> passou a usar o **canal oficial da Meta**. Setup do zero em **[META_SETUP.md](META_SETUP.md)**.
 
 ---
 
@@ -16,20 +19,24 @@ O sistema possui dois módulos principais:
 ## Arquitetura
 
 ```
-WhatsApp ──► Evolution API ──► N8N Webhooks ──► Workflows ──► PostgreSQL
-               (porta 8080)      (porta 5678)                  (porta 5432)
-                                                     │
-                                               Evolution API ──► WhatsApp
+WhatsApp ──► Meta Cloud API ──► N8N Webhook ──► Workflows ──► PostgreSQL
+            (graph.facebook.com)  (/webhook/whatsapp)          (porta 5432)
+                    ▲                     │
+                    └──── envio (Graph API) ◄── N8N HTTP nodes
 ```
+
+A Meta entrega as mensagens recebidas no webhook do N8N (`POST /webhook/whatsapp`) e o N8N
+responde enviando texto de volta via `POST graph.facebook.com/<versão>/<PHONE_NUMBER_ID>/messages`.
 
 **Containers:**
 | Serviço        | Porta  | URL                              |
 |----------------|--------|----------------------------------|
-| Evolution API  | 8080   | http://SEU_IP:8080      |
 | N8N            | 5678   | http://SEU_IP:5678      |
 | PostgreSQL     | 5432   | interno                          |
 | pgAdmin        | 5050   | http://SEU_IP:5050      |
 | Nginx (form)   | 3001   | http://SEU_IP:3001      |
+
+> Não há mais container da Evolution API. A "ponte" com o WhatsApp agora é a Meta (na nuvem).
 
 ---
 
@@ -60,13 +67,19 @@ Variáveis críticas:
 
 ```env
 POSTGRES_PASSWORD=sua_senha_forte
-EVOLUTION_API_KEY=sua_global_api_key
 N8N_BASIC_AUTH_USER=admin
 N8N_BASIC_AUTH_PASSWORD=sua_senha_n8n
 
-# CRÍTICO: sem esta variável o Baileys não gera QR Code (fica em loop)
-CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690
+# WhatsApp Cloud API (Meta) — ver META_SETUP.md para obter estes valores
+GRAPH_API_VERSION=v21.0
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_WABA_ID=...
+WHATSAPP_TOKEN=...
+WHATSAPP_VERIFY_TOKEN=...
 ```
+
+> O setup completo da Meta (criar app, registrar o número (61) 3028-0665, gerar o token
+> permanente e configurar o webhook) está em **[META_SETUP.md](META_SETUP.md)**.
 
 ### 3. Suba os containers
 
@@ -121,17 +134,22 @@ CREATE TABLE gp_escala (
 ### 1. Bot Igreja - Menu Principal
 
 **Arquivo:** `workflows/bot-menu-principal.json`
-**Webhook:** `POST /webhook/gracapaz`
+**Webhooks:** `GET /webhook/whatsapp` (verificação) · `POST /webhook/whatsapp` (mensagens)
 
-Recebe todas as mensagens do WhatsApp via Evolution API. Se a mensagem for do tipo `messages.upsert` e não for enviada pela própria igreja:
+Recebe as mensagens do WhatsApp via Meta Cloud API. O webhook GET responde o `hub.challenge`
+para a Meta validar a URL. O POST processa mensagens recebidas (ignora os *status callbacks*
+de entregue/lido):
 
 - Exibe menu personalizado com o nome do membro: *"Olá, João! Seja bem-vindo(a)..."*
 - Rota opções 1–7 para respostas específicas (horários, eventos, PIX, etc.)
 - Mensagens que não são opções do menu recebem o menu de boas-vindas
+- O envio é feito via `POST graph.facebook.com/<versão>/<PHONE_NUMBER_ID>/messages`
+  (credencial Header Auth `WhatsApp Cloud API` com `Authorization: Bearer <token>`)
 
 **Fluxo:**
 ```
-Webhook ──► Filtrar (IF) ──► Extrair Dados ──► Switch (opção 1-7 ou menu)
+GET  Webhook ──► Responder Challenge (hub.challenge)
+POST Webhook ──► Filtrar (tem messages?) ──► Extrair Dados ──► Switch (opção 1-7 ou menu) ──► Enviar (Graph API)
 ```
 
 ---
@@ -179,6 +197,11 @@ Recebe dados do formulário HTML e insere uma nova escala na tabela `gp_escala` 
 ---
 
 ### 5. Eklesia - Notificação de Escala via WhatsApp
+
+> ⚠️ **Não migrado para a Meta.** Os workflows de escala (este e o #6) ainda usam o formato
+> da Evolution API e **não estão ativos**. Para reativá-los, os nós de envio precisam ser
+> adaptados para a Graph API (mesmo padrão do `bot-menu-principal`) e o recebimento de
+> respostas precisa ser integrado ao webhook único da Meta (`/webhook/whatsapp`).
 
 **Arquivo:** `workflows/eklesia-notificacao-escala.json`
 **Schedule:** Segunda a Sexta, 9h
@@ -257,50 +280,23 @@ Formulário HTML servido via nginx para registrar membros na escala.
 
 ---
 
-## Configuração da Evolution API
+## Configuração da Meta (WhatsApp Cloud API)
 
-### Instância WhatsApp
+Toda a configuração do canal oficial — criar o app, registrar o número **(61) 3028-0665**,
+gerar o token permanente e cadastrar o webhook — está documentada em
+**[META_SETUP.md](META_SETUP.md)**.
 
-| Campo             | Valor           |
-|-------------------|-----------------|
-| Nome da instância | `gracapaz`           |
-| Número WhatsApp   | (ver arquivo `.env`) |
+Resumo dos valores no `.env`:
 
-### Webhooks configurados
+| Variável                   | Origem                                    |
+|----------------------------|-------------------------------------------|
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp → API Setup                      |
+| `WHATSAPP_WABA_ID`         | WhatsApp → API Setup                      |
+| `WHATSAPP_TOKEN`           | Token permanente do System User           |
+| `WHATSAPP_VERIFY_TOKEN`    | String aleatória (igual à do webhook Meta)|
 
-O sistema usa **dois webhooks** na Evolution API para separar o bot do gateway de escala:
-
-```bash
-# Webhook principal do bot
-curl -X POST http://localhost:8080/webhook/set/gracapaz \
-  -H "apikey: SEU_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "http://n8n:5678/webhook/gracapaz",
-    "webhook_by_events": false,
-    "events": ["MESSAGES_UPSERT"]
-  }'
-```
-
-O gateway de escala (`/webhook/escala-gateway`) recebe as mesmas mensagens via encaminhamento interno do workflow do bot.
-
----
-
-## Patch LID — OBRIGATÓRIO
-
-O WhatsApp usa JIDs no formato `@lid` para contatos com privacidade ativada.
-A Evolution API v2.2.3 rejeita esses JIDs por padrão.
-
-O arquivo `patches/main.js` contém o patch. O `patches/Dockerfile` aplica o patch na imagem durante o build:
-
-```dockerfile
-FROM atendai/evolution-api:v2.2.3
-COPY main.js /evolution/dist/main.js
-```
-
-O `docker-compose.yml` faz o build automaticamente — nenhuma configuração extra é necessária.
-
-**O que o patch faz:** na função `whatsappNumber()`, se o JID contém `@lid`, retorna `exists: true` sem chamar `onWhatsApp()`. O Baileys suporta envio nativo para `@lid`.
+**Webhook na Meta:** `Callback URL = https://n8n.gracaepazdf.org.br/webhook/whatsapp`,
+*Verify token* = `WHATSAPP_VERIFY_TOKEN`, campo assinado = `messages`.
 
 ---
 
@@ -311,9 +307,18 @@ A forma mais confiável é importar pela UI do N8N:
 1. Acesse http://SEU_IP:5678
 2. Menu → **Workflows** → **Import from file**
 3. Selecione o arquivo `.json` desejado
-4. Após importar, configure as credenciais (PostgreSQL e API Key da Evolution)
+4. Após importar, configure as credenciais (PostgreSQL e a credencial Header Auth da Meta)
 
 > `n8n import:workflow` via CLI pode falhar com FK constraint na v1.123.4 — use a UI.
+
+### Configurar credencial do WhatsApp Cloud API
+
+Os nós de envio usam a credencial **Header Auth** chamada `WhatsApp Cloud API`:
+
+1. **Credentials** → **New** → **Header Auth**
+2. Name: `Authorization` · Value: `Bearer <WHATSAPP_TOKEN>`
+3. Abra cada nó de envio do workflow `bot-menu-principal` e selecione essa credencial. ⚠️ Nós
+   importados não herdam a credencial automaticamente — reabra e reconecte cada um.
 
 ### Configurar credencial PostgreSQL
 
@@ -334,7 +339,6 @@ docker ps
 
 # Logs em tempo real
 docker-compose logs -f n8n
-docker-compose logs -f evolution-api
 
 # Reiniciar N8N (necessário após lentidão ou travamento de execuções)
 docker restart n8n
@@ -355,21 +359,26 @@ docker-compose up -d --force-recreate form-escala
 
 ## Problemas Conhecidos e Soluções
 
-### QR Code não aparece (loop infinito)
-**Causa:** variável `CONFIG_SESSION_PHONE_VERSION` ausente.
-**Solução:** adicionar `CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690` no `.env` e reiniciar.
+### Webhook da Meta não verifica ("Verify and Save" falha)
+**Causa:** workflow inativo, `WHATSAPP_VERIFY_TOKEN` diferente do cadastrado na Meta, ou URL
+usando `/webhook-test/` em vez de `/webhook/`.
+**Solução:** ativar o workflow, conferir que o token bate, e usar a URL de produção
+`https://n8n.gracaepazdf.org.br/webhook/whatsapp`.
 
-### Mensagem não captura resposta SIM/NÃO de certos contatos
-**Causa:** WhatsApp envia `remoteJid` no formato `@lid` (privacidade ativada) — impossível extrair número.
-**Solução:** o workflow usa `pushName` (nome exibido no WhatsApp) com ILIKE para buscar o membro no banco. Funciona desde que o nome no Eklesia seja próximo ao nome exibido no WhatsApp.
+### Bot responde aos próprios envios / responde "entregue/lido"
+**Causa:** processamento dos *status callbacks* da Meta.
+**Solução:** o filtro "Somente Mensagens Recebidas" só passa quando existe
+`entry[0].changes[0].value.messages` — status callbacks (que trazem `statuses`) são ignorados.
 
-### Emojis no nome do WhatsApp quebram a busca ILIKE
-**Causa:** `pushName` como "Maria Silva💖" não bate com "Maria Silva" no banco.
-**Solução:** o código já strip emojis com `replace(/[^\p{L}\s]/gu, '')` antes de buscar.
+### Erro 401/403 ao enviar mensagem
+**Causa:** `WHATSAPP_TOKEN` inválido/expirado, ou a credencial Header Auth não está com
+`Bearer <token>`.
+**Solução:** usar o **token permanente do System User** (não o temporário de 24h) e conferir o
+valor `Authorization: Bearer <token>` na credencial `WhatsApp Cloud API`.
 
-### Evolution API retorna 400 ao enviar para número sem WhatsApp
-**Causa:** número cadastrado não tem conta WhatsApp ativa.
-**Solução:** `continueOnFail: true` no nó "Enviar WhatsApp" — o workflow continua para o próximo membro.
+### Mensagem não chega ao destinatário (fora da janela de 24h)
+**Causa:** a Meta só permite texto livre dentro de 24h da última mensagem do usuário.
+**Solução:** para disparos proativos, criar e usar um **template aprovado** pela Meta.
 
 ### `n8n import:workflow` falha com FK constraint
 **Causa:** bug com tabela `workflow_publish_history` na v1.123.4.
@@ -394,10 +403,8 @@ gracapaz/
 ├── .env.example                              # Modelo de configuração
 ├── .gitignore
 ├── README.md
+├── META_SETUP.md                             # Guia do zero: WhatsApp Cloud API (Meta)
 ├── form-escala.html                          # Formulário de registro de escala
-├── patches/
-│   ├── Dockerfile                            # Build da Evolution API com patch LID
-│   └── main.js                               # Patch LID (bypass @lid na whatsappNumber())
 ├── scripts/
 │   ├── init-eklesia-db.sql                   # Criação das tabelas gp_membros e gp_escala
 │   ├── criar-tabela-bot-estados.sql          # Tabela bot_estados (máquina de estados)

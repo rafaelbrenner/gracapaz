@@ -1,6 +1,8 @@
 # Guia de Configuração — Projeto Graça e Paz
 
-Documentação completa para instalar e configurar o ambiente de automação WhatsApp com Evolution API, N8N e PostgreSQL.
+Documentação completa para instalar e configurar o ambiente de automação WhatsApp com o **WhatsApp Cloud API (Meta — canal oficial)**, N8N e PostgreSQL.
+
+> O setup do canal oficial da Meta (do zero) está em **[META_SETUP.md](META_SETUP.md)**.
 
 ---
 
@@ -10,7 +12,7 @@ Documentação completa para instalar e configurar o ambiente de automação Wha
 2. [Estrutura do Projeto](#estrutura-do-projeto)
 3. [Configuração do .env](#configuração-do-env)
 4. [Subindo os Containers](#subindo-os-containers)
-5. [Evolution API — Configuração e Instância WhatsApp](#evolution-api)
+5. [WhatsApp Cloud API (Meta)](#whatsapp-cloud-api-meta)
 6. [N8N — Automação](#n8n)
 7. [pgAdmin — Banco de Dados](#pgadmin)
 8. [Portainer — Gerenciamento de Containers](#portainer)
@@ -22,8 +24,9 @@ Documentação completa para instalar e configurar o ambiente de automação Wha
 
 - **Docker** 24+ instalado
 - **Docker Compose** v2+ (já incluso no Docker Desktop)
-- Porta 8080, 5678, 5050, 9000 livres
-- Acesso à internet (o Baileys/WhatsApp precisa conectar nos servidores do WhatsApp)
+- Porta 5678, 5050, 80/443 livres
+- Domínio com HTTPS público para o webhook da Meta (ex: `n8n.gracaepazdf.org.br`)
+- Conta Meta Business + número dedicado (ver [META_SETUP.md](META_SETUP.md))
 
 ---
 
@@ -57,9 +60,12 @@ POSTGRES_PASSWORD=senha_forte_aqui
 POSTGRES_DB=evolution
 N8N_DB=n8n
 
-# Evolution API
-EVOLUTION_API_KEY=chave_api_forte_aqui
-SERVER_URL=http://localhost:8080
+# WhatsApp Cloud API (Meta) — ver META_SETUP.md
+GRAPH_API_VERSION=v21.0
+WHATSAPP_PHONE_NUMBER_ID=seu_phone_number_id
+WHATSAPP_WABA_ID=seu_waba_id
+WHATSAPP_TOKEN=seu_token_permanente
+WHATSAPP_VERIFY_TOKEN=string_aleatoria_secreta
 
 # N8N
 N8N_BASIC_AUTH_USER=admin
@@ -93,166 +99,46 @@ docker compose up -d
 docker ps
 
 # Ver logs de um serviço específico
-docker logs evolution-api -f
+docker logs n8n -f
 ```
 
 Serviços e portas:
 
 | Serviço       | URL                        | Descrição                   |
 |---------------|----------------------------|-----------------------------|
-| Evolution API | http://localhost:8080      | API WhatsApp                |
 | N8N           | http://localhost:5678      | Automação de workflows      |
 | pgAdmin       | http://localhost:5050      | Interface do PostgreSQL     |
-| Portainer     | http://localhost:9000      | Gerenciamento de containers |
+| Nginx (form)  | http://localhost:3001      | Formulário de escala        |
 
 ---
 
-## Evolution API
+## WhatsApp Cloud API (Meta)
 
-### Dados da instância
+A conexão com o WhatsApp é feita pelo **canal oficial da Meta** — não há container nem QR Code.
+Todo o passo a passo (criar app, registrar o número **(61) 3028-0665**, gerar o token
+permanente e cadastrar o webhook) está em **[META_SETUP.md](META_SETUP.md)**.
 
-| Campo | Valor |
-|---|---|
-| **Nome da instância** | `gracapaz` |
-| **Número WhatsApp** | (ver arquivo `.env`) |
-| **Token da instância** | `SUA_INSTANCE_TOKEN_AQUI` |
-| **Channel** | Baileys |
+### Como funciona
 
-### Versões utilizadas
-
-| Componente                    | Versão / Valor          |
-|-------------------------------|-------------------------|
-| Imagem Docker                 | `atendai/evolution-api:latest` (v2.2.3) |
-| Baileys (lib WhatsApp)        | `6.7.12`                |
-| `CONFIG_SESSION_PHONE_VERSION`| `2.3000.1033846690`     |
-
-> **IMPORTANTE:** A variável `CONFIG_SESSION_PHONE_VERSION` é crítica. Sem ela ou com valor desatualizado, o Baileys fica em loop de reconexão e **o QR Code não é gerado**. Sempre verifique a versão correta consultando:
-> ```bash
-> docker exec evolution-api node -e "
-> const { fetchLatestBaileysVersion } = require('/evolution/node_modules/baileys');
-> fetchLatestBaileysVersion().then(v => console.log(JSON.stringify(v)));
-> "
-> ```
-
-### Variáveis de ambiente da Evolution API (docker-compose.yml)
-
-```yaml
-environment:
-  # URL pública do servidor (mude para IP/domínio em produção)
-  - SERVER_URL=http://localhost:8080
-  - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
-
-  # Banco de dados
-  - DATABASE_ENABLED=true
-  - DATABASE_PROVIDER=postgresql
-  - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-  - DATABASE_SAVE_DATA_INSTANCE=true
-  - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-  - DATABASE_SAVE_MESSAGE_UPDATE=true
-
-  # Redis (cache)
-  - REDIS_ENABLED=true
-  - REDIS_URI=redis://redis:6379
-  - REDIS_PREFIX_KEY=evolution
-
-  # Webhook global para o N8N
-  - WEBHOOK_GLOBAL_URL=http://localhost:5678/webhook
-  - WEBHOOK_GLOBAL_ENABLED=true
-  - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=true
-
-  # QR Code
-  - QRCODE_LIMIT=30
-  - QRCODE_COLOR=#000000
-
-  # Versão do WhatsApp — CRÍTICO, manter atualizado
-  - CONFIG_SESSION_PHONE_CLIENT=Evolution API
-  - CONFIG_SESSION_PHONE_NAME=Chrome
-  - CONFIG_SESSION_PHONE_VERSION=2.3000.1033846690
+```
+Recebe:  Meta ──POST──► https://n8n.gracaepazdf.org.br/webhook/whatsapp
+Verifica: Meta ──GET──► mesma URL (workflow responde hub.challenge)
+Envia:   N8N ──POST──► https://graph.facebook.com/<versão>/<PHONE_NUMBER_ID>/messages
 ```
 
-### Criando uma instância WhatsApp
+### Valores no `.env`
 
-#### Opção 1 — Via interface web
+| Variável                   | Origem                          |
+|----------------------------|---------------------------------|
+| `GRAPH_API_VERSION`        | versão da Graph API (ex: v21.0) |
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp → API Setup            |
+| `WHATSAPP_WABA_ID`         | WhatsApp → API Setup            |
+| `WHATSAPP_TOKEN`           | token permanente do System User |
+| `WHATSAPP_VERIFY_TOKEN`    | string aleatória secreta        |
 
-1. Acesse http://localhost:8080/manager
-2. Clique em **New Instance**
-3. Preencha:
-   - **Name**: `gracapaz` (ou o nome desejado)
-   - **Channel**: `Baileys`
-   - **Token**: deixe em branco (gerado automaticamente)
-   - **Number**: deixe em branco (para usar QR Code)
-4. Clique em **Create**
-
-> **Atenção:** Não preencha o campo **Number** ao criar a instância. Quando um número é informado, o Evolution usa código de pareamento em vez de QR Code.
-
-#### Opção 2 — Via API (curl)
-
-```bash
-curl -X POST "http://localhost:8080/instance/create" \
-  -H "apikey: SUA_EVOLUTION_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"instanceName": "gracapaz", "integration": "WHATSAPP-BAILEYS"}'
-```
-
-### Conectando o WhatsApp (QR Code)
-
-#### Via interface web
-1. Acesse http://localhost:8080/manager
-2. Clique na instância `gracapaz`
-3. Clique em **Connect** — o QR Code será exibido
-4. No celular: **WhatsApp → Dispositivos Conectados → Conectar um dispositivo**
-5. Escaneie o QR Code
-
-#### Via API
-```bash
-# Gerar QR Code
-curl -X GET "http://localhost:8080/instance/connect/gracapaz" \
-  -H "apikey: SUA_EVOLUTION_API_KEY"
-
-# Salvar QR Code como imagem
-curl -s "http://localhost:8080/instance/connect/gracapaz" \
-  -H "apikey: SUA_EVOLUTION_API_KEY" | python3 -c "
-import sys, json, base64
-data = json.load(sys.stdin)
-with open('qrcode.png', 'wb') as f:
-    f.write(base64.b64decode(data['base64'].split(',')[1]))
-print('QR Code salvo em qrcode.png')
-"
-```
-
-### Verificar status da instância
-
-```bash
-curl -X GET "http://localhost:8080/instance/fetchInstances" \
-  -H "apikey: SUA_EVOLUTION_API_KEY"
-```
-
-Resposta esperada quando conectado:
-```json
-[{
-  "name": "gracapaz",
-  "connectionStatus": "open",
-  "integration": "WHATSAPP-BAILEYS"
-}]
-```
-
-### Atualizar CONFIG_SESSION_PHONE_VERSION
-
-A versão do WhatsApp muda periodicamente. Quando o QR Code parar de ser gerado, execute:
-
-```bash
-# 1. Verificar versão atual
-docker exec evolution-api node -e "
-const { fetchLatestBaileysVersion } = require('/evolution/node_modules/baileys');
-fetchLatestBaileysVersion().then(v => console.log('Nova versão:', JSON.stringify(v)));
-"
-
-# 2. Atualizar no docker-compose.yml
-# CONFIG_SESSION_PHONE_VERSION=2.3000.XXXXXXXXXX
-
-# 3. Recriar o container
-docker compose up -d --force-recreate evolution-api
-```
+`GRAPH_API_VERSION` e `WHATSAPP_PHONE_NUMBER_ID` são passados ao container do N8N e usados via
+`$env` nas URLs dos nós de envio. O `WHATSAPP_TOKEN` fica na credencial Header Auth
+`WhatsApp Cloud API` (`Authorization: Bearer <token>`).
 
 ---
 
@@ -270,13 +156,16 @@ docker compose up -d --force-recreate evolution-api
 2. Vá em **Workflows → Import from file**
 3. Selecione os arquivos da pasta `workflows/`
 
-### Configurar credencial da Evolution API no N8N
+### Configurar credencial do WhatsApp Cloud API no N8N
 
 1. Vá em **Credentials → New**
 2. Tipo: **HTTP Header Auth**
-3. Nome: `Evolution API`
-4. Header: `apikey`
-5. Value: o valor de `EVOLUTION_API_KEY`
+3. Nome: `WhatsApp Cloud API`
+4. Header (Name): `Authorization`
+5. Value: `Bearer <WHATSAPP_TOKEN>`
+
+> Após importar o workflow, reabra cada nó de envio e selecione essa credencial — nós
+> importados não a herdam automaticamente.
 
 ---
 
@@ -315,42 +204,41 @@ O Portainer permite gerenciar todos os containers via interface web — iniciar,
 
 ## Troubleshooting
 
-### QR Code não é gerado / Evolution API em loop de conexão
+### Webhook da Meta não verifica ("Verify and Save" falha)
 
-**Sintoma:** Logs mostram `state: 'connecting'` repetidamente sem gerar QR Code.
+**Causa:** workflow inativo, `WHATSAPP_VERIFY_TOKEN` diferente do cadastrado na Meta, ou uso da
+URL de teste (`/webhook-test/`).
 
-**Causa:** `CONFIG_SESSION_PHONE_VERSION` desatualizado.
+**Solução:** ativar o workflow `bot-menu-principal`, conferir o token e usar a URL de produção
+`https://n8n.gracaepazdf.org.br/webhook/whatsapp`. Verificar nos logs do N8N a execução do
+webhook GET respondendo o `hub.challenge`.
 
-**Solução:**
-```bash
-# 1. Buscar versão atual
-docker exec evolution-api node -e "
-const { fetchLatestBaileysVersion } = require('/evolution/node_modules/baileys');
-fetchLatestBaileysVersion().then(v => console.log(JSON.stringify(v)));
-"
+### Erro 401/403 ao enviar mensagem
 
-# 2. Atualizar CONFIG_SESSION_PHONE_VERSION no docker-compose.yml
-# Formato: 2.3000.XXXXXXXXXX
+**Causa:** `WHATSAPP_TOKEN` inválido/expirado ou credencial sem `Bearer`.
 
-# 3. Recriar container
-docker compose up -d --force-recreate evolution-api
-```
+**Solução:** usar o token **permanente** do System User (não o temporário de 24h) e conferir
+`Authorization: Bearer <token>` na credencial `WhatsApp Cloud API`.
 
-### Erros "redis disconnected" nos logs
-
-**Causa:** Normal — o Evolution API tem um loop de reconexão com o Redis. Não impede o funcionamento desde que o Redis esteja saudável.
+### Bot não responde a uma mensagem recebida
 
 **Verificar:**
 ```bash
-docker exec redis redis-cli ping
-# Resposta esperada: PONG
+docker logs n8n -f
 ```
+Conferir se a execução do webhook POST aparece. Se a Meta não está chamando o webhook, revisar
+a assinatura do campo `messages` em *WhatsApp → Configuration → Webhook fields*.
+
+### Mensagem não chega (fora da janela de 24h)
+
+**Causa:** a Meta só permite texto livre dentro de 24h da última mensagem do usuário.
+**Solução:** para disparos proativos, usar um **template aprovado** pela Meta.
 
 ### Container não sobe / porta em uso
 
 ```bash
 # Ver qual processo usa a porta
-sudo lsof -i :8080
+sudo lsof -i :5678
 
 # Reiniciar todos os containers
 docker compose restart
@@ -364,13 +252,4 @@ docker compose down -v
 
 # Sobe novamente
 docker compose up -d
-```
-
-### Verificar versão do Baileys instalado
-
-```bash
-docker exec evolution-api node -e "
-const p = require('/evolution/node_modules/baileys/package.json');
-console.log('Baileys:', p.version);
-"
 ```

@@ -15,7 +15,8 @@
 ### Tokens e API Keys
 
 - Mantenha o `CLOUDFLARE_TUNNEL_TOKEN` em segredo
-- Gere uma `EVOLUTION_API_KEY` única e complexa
+- Mantenha o `WHATSAPP_TOKEN` (token permanente da Meta) em segredo — ele dá acesso ao envio
+- Use um `WHATSAPP_VERIFY_TOKEN` aleatório e secreto
 - Rotacione tokens periodicamente (recomendado: a cada 90 dias)
 - Nunca compartilhe tokens em:
   - Repositórios públicos
@@ -62,12 +63,12 @@
    - Não armazene credenciais em workflows
    - Use as credenciais do N8N adequadamente
 
-### Evolution API
+### WhatsApp Cloud API (Meta)
 
-1. Use API Key forte e única
-2. Configure webhooks apenas para URLs confiáveis
-3. Monitore logs regularmente
-4. Limite rate limiting se possível
+1. Use o **token permanente** do System User (não o temporário de 24h) e guarde-o só no `.env`
+2. O `WHATSAPP_TOKEN` fica numa credencial do N8N — nunca em texto dentro do workflow
+3. Valide o webhook com um `WHATSAPP_VERIFY_TOKEN` secreto
+4. Monitore os logs do N8N e o uso na Meta regularmente
 
 ## 🚨 Reportando Vulnerabilidades
 
@@ -149,14 +150,9 @@ Antes de ir para produção, verifique:
 
 ### Limitações de Acesso
 
-```yaml
-# Exemplo: Adicione no docker-compose.yml para limitar acesso
-evolution-api:
-  # ...
-  environment:
-    - RATE_LIMIT_ENABLED=true
-    - RATE_LIMIT_MAX=100
-```
+Restrinja o acesso aos painéis (N8N, pgAdmin) via Nginx Proxy Manager / firewall e mantenha o
+`N8N_BASIC_AUTH_ACTIVE=true`. O envio ao WhatsApp passa pela Meta, que já aplica rate limiting
+por número/WABA.
 
 ## 📞 Contato
 

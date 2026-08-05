@@ -59,9 +59,12 @@ nano .env
 ```bash
 # Exemplo de geração de senhas fortes
 openssl rand -base64 32  # Para POSTGRES_PASSWORD
-openssl rand -base64 32  # Para EVOLUTION_API_KEY
 openssl rand -base64 32  # Para N8N_BASIC_AUTH_PASSWORD
+openssl rand -hex 16     # Para WHATSAPP_VERIFY_TOKEN
 ```
+
+> As credenciais da Meta (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_WABA_ID`)
+> são obtidas no painel da Meta — ver [META_SETUP.md](META_SETUP.md).
 
 ### 4. Configure o Firewall
 
@@ -74,7 +77,6 @@ sudo ufw enable
 
 # Opcional: Se quiser acesso direto às portas
 # sudo ufw allow 5678/tcp  # N8N
-# sudo ufw allow 8080/tcp  # Evolution API
 ```
 
 ### 5. Inicie os Containers
@@ -95,7 +97,6 @@ docker-compose logs -f
 2. Crie um novo túnel
 3. Configure os hostnames:
    - `n8n.seudominio.com` → `http://n8n:5678`
-   - `evolution.seudominio.com` → `http://evolution-api:8080`
 4. Copie o token do túnel
 5. Adicione ao `.env`:
    ```bash
@@ -114,7 +115,7 @@ sudo apt install nginx certbot python3-certbot-nginx -y
 sudo nano /etc/nginx/sites-available/graca_paz
 
 # Obtenha certificados SSL
-sudo certbot --nginx -d n8n.seudominio.com -d evolution.seudominio.com
+sudo certbot --nginx -d n8n.seudominio.com
 
 # Configure renovação automática
 sudo certbot renew --dry-run
@@ -136,21 +137,9 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 }
-
-# Evolution API
-server {
-    server_name evolution.seudominio.com;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
 ```
+
+> O webhook da Meta exige HTTPS público apontando para `n8n.seudominio.com/webhook/whatsapp`.
 
 ## 🔄 Atualizações
 
@@ -201,9 +190,6 @@ docker run --rm -v graca_paz_postgres_data:/data -v $BACKUP_DIR:/backup \
 docker run --rm -v graca_paz_n8n_data:/data -v $BACKUP_DIR:/backup \
   alpine tar czf /backup/n8n_volume_$DATE.tar.gz -C /data .
 
-docker run --rm -v graca_paz_evolution_instances:/data -v $BACKUP_DIR:/backup \
-  alpine tar czf /backup/evolution_volume_$DATE.tar.gz -C /data .
-
 # Backup do arquivo .env (criptografado)
 gpg -c -o $BACKUP_DIR/env_$DATE.gpg .env
 
@@ -243,7 +229,7 @@ docker run --rm -v graca_paz_postgres_data:/data -v /backup:/backup \
 docker-compose logs -f
 
 # Logs de um serviço específico
-docker-compose logs -f evolution-api
+docker-compose logs -f n8n
 
 # Últimas 100 linhas
 docker-compose logs --tail=100
@@ -305,7 +291,7 @@ docker volume prune
 # Aumente recursos do container
 # Edite docker-compose.yml e adicione:
 services:
-  evolution-api:
+  n8n:
     deploy:
       resources:
         limits:
